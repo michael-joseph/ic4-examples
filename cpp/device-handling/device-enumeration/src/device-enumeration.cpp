@@ -4,6 +4,7 @@
 #include <string>
 
 #include <ic4/ic4.h>
+//#include <ic4.h>
 
 std::string format_device_info(const ic4::DeviceInfo& device_info)
 {
