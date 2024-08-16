@@ -65,7 +65,7 @@ namespace helper
 #else
     inline void set_env_var( std::string env_name, std::string value )
     {
-        ::setenv( env_name.c_str(), value.c_str(), 1 );
+        _putenv_s( env_name.c_str(), value.c_str() );
     }
 
     inline auto get_env_var( std::string env_name ) -> std::string
