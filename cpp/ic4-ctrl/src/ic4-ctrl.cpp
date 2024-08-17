@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include <ic4-gui/ic4gui.h>
+#define WIN32
 
 #endif
 
