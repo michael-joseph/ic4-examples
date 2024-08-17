@@ -20,6 +20,7 @@
 
 //https://stackoverflow.com/questions/11041607/getting-screen-size-on-opencv
 
+
 void getScreenResolution(int& width, int& height) {
 #if WIN32
 	width = (int)GetSystemMetrics(SM_CXSCREEN);
@@ -32,11 +33,6 @@ void getScreenResolution(int& width, int& height) {
 #endif
 }
 
-//int main() {
-//	int width, height;
-//	getScreenResolution(width, height);
-//	printf("Screen resolution: %dx%d\n", width, height);
-//}
 
 
 void example_imagebuffer_opencv_snap()
@@ -53,17 +49,33 @@ void example_imagebuffer_opencv_snap()
 	ic4::Grabber grabber;
 	grabber.deviceOpen(*devices.begin());
 
+	// Configure the camera
+	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
+	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
+	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::Mono8);
+
+
 	// Create an OpenCV display window
 	std::cout << "opening window" << std::endl;
-	cv::namedWindow("display", cv::WINDOW_GUI_EXPANDED);
+	cv::namedWindow("display", cv::WINDOW_AUTOSIZE);
 
+	// Get the size of the screen (not sure how this works on multi-monitor setups)
 	int scrn_width, scrn_height;
 	getScreenResolution(scrn_width, scrn_height);
 
+	double img_scale_factor = 0.2;
 
-	cv::moveWindow("display", scrn_width-300, scrn_height-300);
-	//cv::setWindowProperty("display", cv::WND_PROP_FULLSCREEN, cv::WINDOW_GUI_EXPANDED);
-	//cv::setWindowProperty("display", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+	// Move the window to the lower right.
+	// Auto adjust this based on the resolution of the camera image after we
+	// do down-scaling by img_scale_factor using opencv.
+	int cv_window_extra_width_offset = -50;
+	int cv_window_extra_height_offset = -100;
+	cv::moveWindow(
+		"display", 
+		scrn_width + cv_window_extra_width_offset - (int)(img_scale_factor * (double)std::stoi(grabber.devicePropertyMap().getValueString(ic4::PropId::Width))),
+		scrn_height + cv_window_extra_height_offset - (int)(img_scale_factor * (double)std::stoi(grabber.devicePropertyMap().getValueString(ic4::PropId::Height)))
+	);
+
 
 	// Create a sink that converts the data to something that OpenCV can work with (e.g. BGR8)
 	auto sink = ic4::SnapSink::create(ic4::PixelFormat::Mono8);
@@ -71,34 +83,26 @@ void example_imagebuffer_opencv_snap()
 
 	try {
 		for (int i = 0; i < 100; ++i) {
-			/*std::cout << "Focus display window and press any key to continue..." << std::endl;
-			cv::waitKey(100);*/
-
-			// Snap image from running data stream
+			// Snap image from running data stream. How do I check if the buffer is valid?
 			//std::cout << "auto buffer = sink->snapSingle(1000);" << std::endl;
 			auto buffer = sink->snapSingle(1000);
 
-			// Create a cv::Mat pointing into the BGR8 buffer
-			//std::cout << "auto mat = ic4interop::OpenCV::wrap(*buffer);" << std::endl;
+			// Create a cv::Mat
 			auto mat = ic4interop::OpenCV::copy(*buffer);
 
 			// Generate a reduced size image for display purposes.
 			auto mat_decimated = cv::Mat();
 			auto dsize = cv::Size(0,0);
-			cv::resize(mat, mat_decimated, dsize, 0.1, 0.1, cv::INTER_LINEAR);
+			cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
 
-			//std::cout << "Displaying captured image" << std::endl;
-			//cv::imshow("display", mat);
 
-			//std::cout << "Focus display window and press any key to continue..." << std::endl;;
-			cv::waitKey(1);
-
-			//// Blur the image in place (this still uses the ImageBuffer's memory)
-			//cv::blur(mat, mat, cv::Size(75, 75));
-
-			//std::cout << "Displaying blurred image" << std::endl;
+			// Update image, I don't think this updates until waitKey is called.			
 			cv::imshow("display", mat_decimated);
+
+			// make the window update (required).
+			cv::waitKey(1);
 			
+			// Debug, display loop iter.
 			std::cout << i << std::endl;
 		}
 		std::cout << "grabber.streamStop();" << std::endl;
@@ -108,6 +112,7 @@ void example_imagebuffer_opencv_snap()
 		std::cout << "Error, trying to stop stream and exit [grabber.streamStop();]" << std::endl;
 		grabber.streamStop();
 	}
+
 }
 
 int main()
