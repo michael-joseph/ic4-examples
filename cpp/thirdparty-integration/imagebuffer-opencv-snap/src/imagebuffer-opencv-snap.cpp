@@ -10,6 +10,7 @@
 
 #include <iostream>
 
+
 #define WIN32 1
 
 #if WIN32
@@ -26,7 +27,43 @@
 Custom subclass of QueueSinkListener to handle interfacing with a QueueSink.
 */
 class customQueueSinkListener : public ic4::QueueSinkListener {
+	bool sinkConnected(ic4::QueueSink& sink, const ic4::ImageType imageType, size_t min_buffers_required) {
+		std::cout << "min_buffers_required: " << min_buffers_required << std::endl;
+		// Allocate buffers for the sink. First this will be hardcoded, then we'll 
+		// make it more general.
+		ic4::Error err;
+		if (!sink.allocAndQueueBuffers(100, err)) {
+			std::cout << "ERROR sink.allocAndQueueBuffers()" << std::endl;
+		}
+	}
 
+	void framesQueued(ic4::QueueSink& sink) {
+		auto buffer = sink.popOutputBuffer();
+		// Do something with the buffer
+		
+		double img_scale_factor = 0.2;
+
+		// Can I do this opencv stuff in this callback?
+
+		// Create a cv::Mat
+		auto mat = ic4interop::OpenCV::copy(*buffer);
+
+		// Generate a reduced size image for display purposes. How can I use this with the 
+		// displayBuffer?
+		auto mat_decimated = cv::Mat();
+		auto dsize = cv::Size(0,0);
+		cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
+
+
+		// Update image, I don't think this updates until waitKey is called.			
+		cv::imshow("display", mat_decimated);
+
+		
+
+
+		// Does resetting the shared pointer give it back to the queue???
+		buffer.reset();
+	}
 };
 
 
@@ -111,37 +148,23 @@ void example_imagebuffer_opencv_snap()
 
 
 	// Create a sink that converts the data to something that OpenCV can work with (e.g. BGR8)
-	auto sink = ic4::SnapSink::create(ic4::PixelFormat::Mono8);
+	std::cout << "auto listener = customQueueSinkListener();" << std::endl;
+	auto listener = customQueueSinkListener();
+	std::cout << "auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::Mono8);" << std::endl;
+	auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::Mono8);
+	std::cout << "grabber.streamSetup(sink);" << std::endl;
 	grabber.streamSetup(sink);
 
-	
+	int time_to_wait_ms = 1000;
+
+	// https://www.asciitable.com/
+	int key_code = -1;
+
 	try {
-		for (int i = 0; i < 100; ++i) {
-			// Snap image from running data stream. How do I check if the buffer is valid?
-			//std::cout << "auto buffer = sink->snapSingle(1000);" << std::endl;
-			auto buffer = sink->snapSingle(1000);
-
-			// Create a cv::Mat
-			auto mat = ic4interop::OpenCV::copy(*buffer);
-
-			// Generate a reduced size image for display purposes. How can I use this with the 
-			// displayBuffer?
-			auto mat_decimated = cv::Mat();
-			auto dsize = cv::Size(0,0);
-			cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
-
-
-			// Update image, I don't think this updates until waitKey is called.			
-			cv::imshow("display", mat_decimated);
-
+		while (key_code != 27) {
 			// make the window update (required).
-			cv::waitKey(1);
-			
-			auto stats = grabber.streamStatistics();
-			print_streamStatistics(stats);
-
-			// Debug, display loop iter.
-			std::cout << "[" << i << "]" << std::endl;
+			//  It returns the code of the pressed key or -1 if no key was pressed before the specified time had elapsed.
+			key_code = cv::waitKeyEx(1);
 		}
 		std::cout << "grabber.streamStop();" << std::endl;
 		grabber.streamStop();
@@ -150,6 +173,49 @@ void example_imagebuffer_opencv_snap()
 		std::cout << "Error, trying to stop stream and exit [grabber.streamStop();]" << std::endl;
 		grabber.streamStop();
 	}
+	
+	
+
+
+
+	//try {
+	//	for (int i = 0; i < 100; ++i) {
+	//		// Snap image from running data stream. How do I check if the buffer is valid?
+	//		//std::cout << "auto buffer = sink->snapSingle(1000);" << std::endl;
+	//		auto buffer = sink->snapSingle(1000);
+
+	//		// Create a cv::Mat
+	//		auto mat = ic4interop::OpenCV::copy(*buffer);
+
+	//		// Generate a reduced size image for display purposes. How can I use this with the 
+	//		// displayBuffer?
+	//		auto mat_decimated = cv::Mat();
+	//		auto dsize = cv::Size(0,0);
+	//		cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
+
+
+	//		// Update image, I don't think this updates until waitKey is called.			
+	//		cv::imshow("display", mat_decimated);
+
+	//		// make the window update (required).
+	//		cv::waitKey(1);
+	//		
+	//		auto stats = grabber.streamStatistics();
+	//		print_streamStatistics(stats);
+
+	//		// Debug, display loop iter.
+	//		std::cout << "[" << i << "]" << std::endl;
+	//	}
+	//	std::cout << "grabber.streamStop();" << std::endl;
+	//	grabber.streamStop();
+	//}
+	//catch (...) {
+	//	std::cout << "Error, trying to stop stream and exit [grabber.streamStop();]" << std::endl;
+	//	grabber.streamStop();
+	//}
+
+
+
 
 }
 
