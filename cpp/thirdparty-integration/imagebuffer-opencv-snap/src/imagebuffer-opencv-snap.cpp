@@ -18,8 +18,17 @@
 #include <X11/Xlib.h>
 #endif
 
-//#include <winuser.h>
-//#include <gl>
+
+// file:///C:/Program%20Files/The%20Imaging%20Source%20Europe%20GmbH/ic4/share/theimagingsource/ic4/doc/cpp/classic4_1_1_queue_sink.html
+// file:///C:/Program%20Files/The%20Imaging%20Source%20Europe%20GmbH/ic4/share/theimagingsource/ic4/doc/cpp/classic4_1_1_queue_sink_listener.html
+
+/*
+Custom subclass of QueueSinkListener to handle interfacing with a QueueSink.
+*/
+class customQueueSinkListener : public ic4::QueueSinkListener {
+
+};
+
 
 //https://stackoverflow.com/questions/11041607/getting-screen-size-on-opencv
 
