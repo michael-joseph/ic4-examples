@@ -18,6 +18,9 @@
 #include <X11/Xlib.h>
 #endif
 
+//#include <winuser.h>
+//#include <gl>
+
 //https://stackoverflow.com/questions/11041607/getting-screen-size-on-opencv
 
 
@@ -76,11 +79,25 @@ void example_imagebuffer_opencv_snap()
 		scrn_height + cv_window_extra_height_offset - (int)(img_scale_factor * (double)std::stoi(grabber.devicePropertyMap().getValueString(ic4::PropId::Height)))
 	);
 
+	////ic4::c_interface::IC4_WINDOW_HANDLE window_handle;
+	//auto display = ic4::Display::create(ic4::DisplayType::Default, IC4_WINDOW_HANDLE_NULL);
+	//auto err = ic4::Error();
+	//display->setRenderPosition(
+	//	ic4::DisplayRenderPosition::Custom,
+	//	0,
+	//	0,
+	//	200,
+	//	200,
+	//	err
+	//);
+	
+	//grabber.streamSetup(display, ic4::StreamSetupOption::AcquisitionStart);
 
 	// Create a sink that converts the data to something that OpenCV can work with (e.g. BGR8)
 	auto sink = ic4::SnapSink::create(ic4::PixelFormat::Mono8);
 	grabber.streamSetup(sink);
 
+	
 	try {
 		for (int i = 0; i < 100; ++i) {
 			// Snap image from running data stream. How do I check if the buffer is valid?
@@ -90,7 +107,8 @@ void example_imagebuffer_opencv_snap()
 			// Create a cv::Mat
 			auto mat = ic4interop::OpenCV::copy(*buffer);
 
-			// Generate a reduced size image for display purposes.
+			// Generate a reduced size image for display purposes. How can I use this with the 
+			// displayBuffer?
 			auto mat_decimated = cv::Mat();
 			auto dsize = cv::Size(0,0);
 			cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
@@ -98,10 +116,14 @@ void example_imagebuffer_opencv_snap()
 
 			// Update image, I don't think this updates until waitKey is called.			
 			cv::imshow("display", mat_decimated);
+			//display->displayBuffer(buffer);
 
 			// make the window update (required).
 			cv::waitKey(1);
 			
+			//auto stats = grabber.streamStatistics();
+
+
 			// Debug, display loop iter.
 			std::cout << i << std::endl;
 		}
@@ -117,7 +139,7 @@ void example_imagebuffer_opencv_snap()
 
 int main()
 {
-	
+	//ic4::exitLibrary();
 
 	// Startup like the demo app. Sometimes when the camera goes unresponsive the 
 	// previous method failed to start, while the demo app worked. I'm not sure
