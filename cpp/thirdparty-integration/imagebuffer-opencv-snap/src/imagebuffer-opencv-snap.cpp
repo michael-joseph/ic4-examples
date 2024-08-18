@@ -11,7 +11,8 @@
 
 #include <chrono>
 #include <cmath>
-
+#include <thread>
+#include <mutex>
 
 #define WIN32 1
 
@@ -21,13 +22,17 @@
 #include <X11/Xlib.h>
 #endif
 
-
 std::atomic<int> last_key = -1;
+std::atomic<bool> stop_all_flag = false;
 
+/*
+Gets the size of the screen (not tested on multi-monitor setups).
 
-//https://stackoverflow.com/questions/11041607/getting-screen-size-on-opencv
+This is used in the customQueueSinkListener() class to position the
+opencv window.
 
-
+https://stackoverflow.com/questions/11041607/getting-screen-size-on-opencv
+*/
 void getScreenResolution(int& width, int& height) {
 #if WIN32
 	width = (int)GetSystemMetrics(SM_CXSCREEN);
@@ -114,15 +119,11 @@ public:
 
 
 		auto buffer = sink.popOutputBuffer();
-
-		//std::cout << "Doing something with this buffer" << std::endl;
 		
 		double img_scale_factor = 0.2;
 
-		// Can I do this opencv stuff in this callback?
-
 		// Create a cv::Mat
-		auto mat = ic4interop::OpenCV::copy(*buffer);
+		auto mat = ic4interop::OpenCV::wrap(*buffer);
 
 		// Generate a reduced size image for display purposes. How can I use this with the 
 		// displayBuffer?
@@ -130,7 +131,7 @@ public:
 		auto dsize = cv::Size(0,0);
 		cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
 
-		// Calculate the FPS
+		// Calculate the FPS to display on the reduced image.
 		int fps = (int)round(1.0 / (1e-9 * (double)std::chrono::duration_cast<std::chrono::nanoseconds>(
 			std::chrono::high_resolution_clock::now()
 			- frame_end_time
@@ -181,8 +182,6 @@ private:
 };
 
 
-
-
 /*
 Prints the steam statistics.
 */
@@ -213,7 +212,6 @@ void print_streamStatistics(ic4::Grabber::StreamStatistics stats) {
 
 void example_imagebuffer_opencv_snap()
 {
-
 	// Create a new Grabber and open the first device. We should only have
 	// one compatible camera connected so this will be safe.
 	auto devices = ic4::DeviceEnum::enumDevices();
@@ -224,10 +222,6 @@ void example_imagebuffer_opencv_snap()
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
 	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::Mono8);
-
-
-
-
 
 	// Create a sink that converts the data to something that OpenCV can work with (e.g. BGR8)
 	std::cout << "auto listener = customQueueSinkListener();" << std::endl;
@@ -244,7 +238,7 @@ void example_imagebuffer_opencv_snap()
 	int key_code = -1;
 
 	try {
-		while (key_code != 27) {
+		while (key_code != 27 && !stop_all_flag.load()) {
 			// make the window update (required).
 			//  It returns the code of the pressed key or -1 if no key was pressed before the specified time had elapsed.
 			key_code = last_key.load();
@@ -257,56 +251,14 @@ void example_imagebuffer_opencv_snap()
 		std::cout << "Error, trying to stop stream and exit [grabber.streamStop();]" << std::endl;
 		grabber.streamStop();
 	}
-	
-	
-
-
-
-	//try {
-	//	for (int i = 0; i < 100; ++i) {
-	//		// Snap image from running data stream. How do I check if the buffer is valid?
-	//		//std::cout << "auto buffer = sink->snapSingle(1000);" << std::endl;
-	//		auto buffer = sink->snapSingle(1000);
-
-	//		// Create a cv::Mat
-	//		auto mat = ic4interop::OpenCV::copy(*buffer);
-
-	//		// Generate a reduced size image for display purposes. How can I use this with the 
-	//		// displayBuffer?
-	//		auto mat_decimated = cv::Mat();
-	//		auto dsize = cv::Size(0,0);
-	//		cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
-
-
-	//		// Update image, I don't think this updates until waitKey is called.			
-	//		cv::imshow("display", mat_decimated);
-
-	//		// make the window update (required).
-	//		cv::waitKey(1);
-	//		
-	//		auto stats = grabber.streamStatistics();
-	//		print_streamStatistics(stats);
-
-	//		// Debug, display loop iter.
-	//		std::cout << "[" << i << "]" << std::endl;
-	//	}
-	//	std::cout << "grabber.streamStop();" << std::endl;
-	//	grabber.streamStop();
-	//}
-	//catch (...) {
-	//	std::cout << "Error, trying to stop stream and exit [grabber.streamStop();]" << std::endl;
-	//	grabber.streamStop();
-	//}
-
-
-
-
 }
 
-int main()
-{
-	//ic4::exitLibrary();
 
+/*
+Function for running all camera code so that this can be easily
+called in a separate thread later in a dll.
+*/
+void queueSinkListener_and_opencv_display() {
 	// Startup like the demo app. Sometimes when the camera goes unresponsive the 
 	// previous method failed to start, while the demo app worked. I'm not sure
 	// why.
@@ -321,4 +273,28 @@ int main()
 
 	std::cout << "ic4::exitLibrary();" << std::endl;
 	ic4::exitLibrary();
+}
+
+/*
+The main function will now serve as a testbench for controlling the worker 
+thread through simple key presses (_getwch) so we can more easily 
+transition to a dll interface.
+*/
+int main()
+{
+	bool break_flag = false;
+	wint_t key_press_main;
+	std::thread worker_thread(queueSinkListener_and_opencv_display);
+	while (!break_flag) {
+		// https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-6.0/aa299374(v=vs.60)
+		// Escape key in _getwch() is 27, ctrl+c is 3.
+		key_press_main = _getwch();
+		std::cout << "key_press_main: " << key_press_main << std::endl;
+		if (key_press_main == 27) {
+			break_flag = true;
+			stop_all_flag.store(true);
+		}
+	}
+	worker_thread.join();
+	return 0;
 }
