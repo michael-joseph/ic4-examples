@@ -36,21 +36,42 @@ void getScreenResolution(int& width, int& height) {
 #endif
 }
 
+/*
+Prints the steam statistics.
+*/
+void print_streamStatistics(ic4::Grabber::StreamStatistics stats) {
+	std::string out_str("");
+	std::cout
+		<< "DEVICE: "
+		<< stats.device_underrun
+		<< "/"
+		<< stats.device_transmission_error
+		<< "/"
+		<< stats.device_delivered;
+	std::cout
+		<< ";  sink: "
+		<< stats.sink_underrun
+		<< "/"
+		<< stats.sink_ignored
+		<< "/"
+		<< stats.sink_delivered;
+	std::cout
+		<< ";  transform: "
+		<< stats.transform_underrun
+		<< "/"
+		<< stats.transform_delivered
+		<< std::endl;
+}
 
 
 void example_imagebuffer_opencv_snap()
 {
-	//// Let the user select a device
-	//auto devices = ic4::DeviceEnum::enumDevices();
-	//auto it = ic4_examples::console::select_from_list(devices);
-	//if( it == devices.end() )
-	//	return;
 
 	// Create a new Grabber and open the first device. We should only have
 	// one compatible camera connected so this will be safe.
 	auto devices = ic4::DeviceEnum::enumDevices();
 	ic4::Grabber grabber;
-	grabber.deviceOpen(*devices.begin());
+	grabber.deviceOpen(devices.front());
 
 	// Configure the camera
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
@@ -79,19 +100,6 @@ void example_imagebuffer_opencv_snap()
 		scrn_height + cv_window_extra_height_offset - (int)(img_scale_factor * (double)std::stoi(grabber.devicePropertyMap().getValueString(ic4::PropId::Height)))
 	);
 
-	////ic4::c_interface::IC4_WINDOW_HANDLE window_handle;
-	//auto display = ic4::Display::create(ic4::DisplayType::Default, IC4_WINDOW_HANDLE_NULL);
-	//auto err = ic4::Error();
-	//display->setRenderPosition(
-	//	ic4::DisplayRenderPosition::Custom,
-	//	0,
-	//	0,
-	//	200,
-	//	200,
-	//	err
-	//);
-	
-	//grabber.streamSetup(display, ic4::StreamSetupOption::AcquisitionStart);
 
 	// Create a sink that converts the data to something that OpenCV can work with (e.g. BGR8)
 	auto sink = ic4::SnapSink::create(ic4::PixelFormat::Mono8);
@@ -116,16 +124,15 @@ void example_imagebuffer_opencv_snap()
 
 			// Update image, I don't think this updates until waitKey is called.			
 			cv::imshow("display", mat_decimated);
-			//display->displayBuffer(buffer);
 
 			// make the window update (required).
 			cv::waitKey(1);
 			
-			//auto stats = grabber.streamStatistics();
-
+			auto stats = grabber.streamStatistics();
+			print_streamStatistics(stats);
 
 			// Debug, display loop iter.
-			std::cout << i << std::endl;
+			std::cout << "[" << i << "]" << std::endl;
 		}
 		std::cout << "grabber.streamStop();" << std::endl;
 		grabber.streamStop();
