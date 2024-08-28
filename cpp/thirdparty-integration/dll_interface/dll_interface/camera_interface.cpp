@@ -9,6 +9,9 @@ Worker thread started in start_interface() and joined in stop_interface().
 */
 std::thread worker_thread;
 
+std::atomic<int> init_library_error = -1;
+
+
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
 
@@ -112,12 +115,15 @@ void queueSinkListener_and_opencv_display() {
 	// Startup like the demo app. Sometimes when the camera goes unresponsive the 
 	// previous method failed to start, while the demo app worked. I'm not sure
 	// why.
+	int init_err;
 	ic4::InitLibraryConfig conf = {};
 	conf.apiLogLevel = ic4::LogLevel::Warning;
 	conf.logTargets = ic4::LogTarget::WinDebug;
 	conf.defaultErrorHandlerBehavior = ic4::ErrorHandlerBehavior::Throw;
 	std::cout << "ic4::initLibrary(conf);" << std::endl;
-	ic4::initLibrary(conf);
+	init_err = ic4::initLibrary(conf);
+
+	init_library_error.store(init_err);
 
 	example_imagebuffer_opencv_snap();
 
@@ -136,6 +142,16 @@ DLL_EXPORT int DLL_CALLSPEC start_interface()
 {
 	worker_thread = std::thread{ queueSinkListener_and_opencv_display };
 	return 0;
+}
+
+/*
+Call this to check the value of init_library_error. Currently this will be -1
+before initialization is complete. Then it will be 0 if no error and 1 if 
+error.
+*/
+DLL_EXPORT int DLL_CALLSPEC check_for_init_error()
+{
+	return init_library_error.load();
 }
 
 

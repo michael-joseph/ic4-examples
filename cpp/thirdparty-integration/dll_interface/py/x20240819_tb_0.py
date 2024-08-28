@@ -96,6 +96,73 @@ def debug_trace():
 
 
 
+class pt_camera_dll():
+    """!"""
+    def __init__(self):
+        path_to_dll = pathlib.Path(
+            r"C:\Users\ohns-user\Documents\GitHub\ic4-examples\cpp\thirdparty-integration\dll_interface\dll_interface\x64\Release\dll_interface.dll"
+        )
+
+        # https://stackoverflow.com/questions/59330863/cant-import-dll-module-in-python
+        # This would not load correctly without winmode=0. I'm guessing the opencv
+        # stuff isn't found correctly. Also, all required dll's need to be in the
+        # same directory when we load the dll. There's probably some way to add this
+        # to the system path too but I haven't figure it out yet.
+        prev_dir = pathlib.Path(get_script_dir())
+        logger.debug('   dll exists: %d' % path_to_dll.exists())
+        os.chdir(path_to_dll.parent.as_posix())
+        dll = ctypes.CDLL(path_to_dll.as_posix(), winmode=0)
+        os.chdir(prev_dir.as_posix())
+        logger.debug('    done loading dll')
+
+        #
+
+        # /*
+        # The start_interface function will now serve as a testbench for controlling
+        # the worker thread through simple key presses (_getwch) so we can more easily
+        # transition to a dll interface.
+        # */
+        # DLL_EXPORT int DLL_CALLSPEC start_interface();
+        dll.start_interface.argtypes = []
+        dll.start_interface.restypes = ctypes.c_int
+
+        #
+        #
+        # /*
+        # Sets the global stop flag to stop the worker/camera thread.
+        # */
+        # DLL_EXPORT int DLL_CALLSPEC stop_interface();
+        dll.stop_interface.argtypes = []
+        dll.stop_interface.restypes = ctypes.c_int
+
+        # /*
+        # Calls worker_thread.join(), this shoul
+        # */
+        # DLL_EXPORT int DLL_CALLSPEC join_interface();
+        dll.join_interface.argtypes = []
+        dll.join_interface.restypes = ctypes.c_int
+
+        self._dll = dll
+
+
+    def start(self):
+        """!"""
+        dll.start_interface()
+
+
+    def stop(self):
+        """!"""
+        dll.stop_interface()
+
+
+
+    def join(self):
+        """!"""
+        dll.stop_interface()
+        dll.join_interface()
+
+
+
 
 ################################################################
 if(__name__ == "__main__"):
@@ -149,7 +216,7 @@ if(__name__ == "__main__"):
 
     dll.start_interface()
 
-    time.sleep(5)
+    time.sleep(20)
 
     dll.stop_interface()
     dll.join_interface()

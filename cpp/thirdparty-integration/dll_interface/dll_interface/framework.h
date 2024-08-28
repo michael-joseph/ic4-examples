@@ -202,6 +202,15 @@ transition to a dll interface.
 DLL_EXPORT int DLL_CALLSPEC start_interface();
 
 
+
+/*
+Call this to check the value of init_library_error. Currently this will be -1
+before initialization is complete. Then it will be 0 if no error and 1 if
+error.
+*/
+DLL_EXPORT int DLL_CALLSPEC check_for_init_error();
+
+
 /*
 Sets the global stop flag to stop the worker/camera thread.
 */

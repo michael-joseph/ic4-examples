@@ -258,10 +258,11 @@ void example_imagebuffer_opencv_snap()
 Function for running all camera code so that this can be easily
 called in a separate thread later in a dll.
 */
-void queueSinkListener_and_opencv_display() {
+int queueSinkListener_and_opencv_display() {
 	// Startup like the demo app. Sometimes when the camera goes unresponsive the 
 	// previous method failed to start, while the demo app worked. I'm not sure
 	// why.
+	int init_err;
 	ic4::InitLibraryConfig conf = {};
 	conf.apiLogLevel = ic4::LogLevel::Warning;
 	conf.logTargets = ic4::LogTarget::WinDebug;
