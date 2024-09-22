@@ -4,9 +4,9 @@
 // Windows Header Files
 #include <windows.h>
 
-
-
-#pragma once
+// AVOID Weird crash locking mutex?
+// https://stackoverflow.com/questions/78598141/first-stdmutexlock-crashes-in-application-built-with-latest-visual-studio
+#define _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR
 
 #include <opencv2/opencv.hpp>
 #include <ic4/ic4.h>
@@ -28,6 +28,13 @@
 // to call from the dll.
 #define DLL_EXPORT extern "C" __declspec(dllexport)
 #define DLL_CALLSPEC __stdcall
+
+
+extern std::mutex camera_frame_acq_mutex;
+extern std::atomic<size_t> frames_grabbed;
+extern std::atomic<size_t> frames_to_grab;
+extern std::list<cv::Mat> frame_list;
+
 
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
@@ -93,6 +100,8 @@ public:
 		static size_t counter = 0;
 		static auto frame_end_time = std::chrono::high_resolution_clock::now();
 
+
+
 		if (first_call) {
 			// Create an OpenCV display window
 			std::cout << "opening window" << std::endl;
@@ -125,6 +134,29 @@ public:
 
 		// Create a cv::Mat
 		auto mat = ic4interop::OpenCV::wrap(*buffer);
+
+		/*
+		Acquire the frame if enabled.
+		*/
+		{
+			const std::lock_guard<std::mutex> lock(camera_frame_acq_mutex);
+			// Add the frame to the frame_list if we're acquiring, otherwise
+			// skip. Then increment the frames_grabbed counter.
+			if (frames_grabbed.load() < frames_to_grab.load()) {
+				if (frames_grabbed == 0) {
+					// on the first frame we need to make sure the list is 
+					// cleared. This isn't ideal though because I don't know
+					// if it will add a time delay.
+					frame_list.clear();
+				}
+				frame_list.push_back(mat);
+				frames_grabbed.store(frames_grabbed.load()+1);
+			}
+			else {
+				// do nothing, we're done acquiring or not acquiring.
+				;
+			}
+		}
 
 		// Generate a reduced size image for display purposes. How can I use this with the 
 		// displayBuffer?

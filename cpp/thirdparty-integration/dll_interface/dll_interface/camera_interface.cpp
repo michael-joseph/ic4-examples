@@ -13,6 +13,33 @@ std::atomic<int> init_library_error = -1;
 
 
 /*
+Mutex used to access all camera acquisition data frames_grabbed,
+frames_to_grab, frame_list, etc.
+*/
+std::mutex camera_frame_acq_mutex;
+
+/*
+Number of frames that have been grabbed and saved in the frame_list.
+This is directly set by the dll interface back to 0 to start acquiring
+data on the next frame.
+*/
+std::atomic<size_t> frames_grabbed = 0;
+
+/*
+Number of frames that we will grab before finishing one acquisition.
+*/
+std::atomic<size_t> frames_to_grab = 0;
+
+/*
+List of frames that we have grabbed in the current acquisition. This
+will be a list of cv::Mat objects. Each cv::Mat is created when we call
+ic4interop::OpenCV::wrap().
+*/
+std::list<cv::Mat> frame_list;
+
+
+
+/*
 Gets the size of the screen (not tested on multi-monitor setups).
 
 This is used in the customQueueSinkListener() class to position the
@@ -154,7 +181,6 @@ DLL_EXPORT int DLL_CALLSPEC check_for_init_error()
 	return init_library_error.load();
 }
 
-
 /*
 Sets the global stop flag to stop the worker/camera thread.
 */
@@ -175,4 +201,45 @@ DLL_EXPORT int DLL_CALLSPEC join_interface() {
 	worker_thread.join();
 	return 0;
 }
+
+
+DLL_EXPORT int DLL_CALLSPEC set_frames_grabbed(size_t val) {
+	{
+		const std::lock_guard<std::mutex> lock(camera_frame_acq_mutex);
+		frames_grabbed.store(val);
+	}
+	return 0;
+}
+
+
+DLL_EXPORT int DLL_CALLSPEC get_frames_grabbed(size_t val) {
+	return frames_grabbed.load();
+}
+
+
+DLL_EXPORT int DLL_CALLSPEC set_frames_to_grab(size_t val) {
+	{
+		const std::lock_guard<std::mutex> lock(camera_frame_acq_mutex);
+		frames_to_grab.store(val);
+	}
+	return 0;
+}
+
+
+DLL_EXPORT int DLL_CALLSPEC get_frames_to_grab(size_t val) {
+	return frames_to_grab.load();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
