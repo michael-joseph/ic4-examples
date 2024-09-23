@@ -92,6 +92,11 @@ def debug_trace():
 
 
 
+class ReadOldestFrameTimeoutError(Exception):
+    """!"""
+    pass
+
+
 class pt_camera_dll():
     """!"""
     def __init__(self):
@@ -111,7 +116,6 @@ class pt_camera_dll():
         os.chdir(prev_dir.as_posix())
         logger.debug('    done loading dll')
 
-        #
 
         # /*
         # The start_interface function will now serve as a testbench for controlling
@@ -122,8 +126,7 @@ class pt_camera_dll():
         dll.start_interface.argtypes = []
         dll.start_interface.restypes = ctypes.c_int
 
-        #
-        #
+
         # /*
         # Sets the global stop flag to stop the worker/camera thread.
         # */
@@ -189,9 +192,11 @@ class pt_camera_dll():
         dll.clear_frame_list.argtypes = []
         dll.clear_frame_list.restypes = ctypes.c_int
 
-
-
         self._dll = dll
+
+
+        self._height = 0
+        self._width = 0
 
 
     def start(self):
@@ -199,18 +204,35 @@ class pt_camera_dll():
         self._dll.start_interface()
 
 
-    def read_oldest_frame(self):
+    def fetch_image_sizes(self):
+        """!
+        Get the sizes of the image from the frames stored internally. This must
+        be called when there is at least one frame stored internally in the dll.
+        """
+        self._height = self._dll.get_image_height()
+        self._width = self._dll.get_image_width()
+
+
+    def read_oldest_frame(self, timeout_s=5):
         """!"""
         d = np.zeros((self._dll.get_frame_size_in_bytes(),), dtype=np.uint8)
-        self._dll.read_oldest_frame(d)
-        d = d.reshape((self._dll.get_image_height(), self._dll.get_image_width()))
+        start_time = time.time()
+        err = -1
+        while(err == -1):
+            err = self._dll.read_oldest_frame(d)
+            if(time.time() - start_time > timeout_s):
+                raise ReadOldestFrameTimeoutError()
+        d = d.reshape((self._height, self._width))
         return d
+
+
+    def get_frames_to_grab(self):
+        return dll._dll.get_frames_to_grab()
 
 
     def stop(self):
         """!"""
         self._dll.stop_interface()
-
 
 
     def join(self):
@@ -237,15 +259,20 @@ if(__name__ == "__main__"):
 
     time.sleep(3)
 
+    dll.fetch_image_sizes()
+
     dll.stop()
     dll.join()
 
 
     dll._dll.print_info_on_frames()
 
-    d = dll.read_oldest_frame()
+    frame_list = []
+    times_to_read = dll.get_frames_to_grab()
+    for i in range(0, times_to_read):
+        frame_list.append(dll.read_oldest_frame())
 
-    plt.imshow(d)
+    plt.imshow(frame_list[-1])
     plt.show()
 
 
