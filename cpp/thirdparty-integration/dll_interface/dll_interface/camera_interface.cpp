@@ -212,7 +212,7 @@ DLL_EXPORT int DLL_CALLSPEC set_frames_grabbed(size_t val) {
 }
 
 
-DLL_EXPORT int DLL_CALLSPEC get_frames_grabbed(size_t val) {
+DLL_EXPORT size_t DLL_CALLSPEC get_frames_grabbed() {
 	return frames_grabbed.load();
 }
 
@@ -226,13 +226,164 @@ DLL_EXPORT int DLL_CALLSPEC set_frames_to_grab(size_t val) {
 }
 
 
-DLL_EXPORT int DLL_CALLSPEC get_frames_to_grab(size_t val) {
+DLL_EXPORT size_t DLL_CALLSPEC get_frames_to_grab() {
 	return frames_to_grab.load();
 }
 
 
 
+DLL_EXPORT int DLL_CALLSPEC print_info_on_frames() {
+	size_t num_frames = frame_list.size();
+	std::cout << "num_frames = " << num_frames << std::endl;
+	//
+	if (num_frames > 0) {
+		cv::Mat first_frame = frame_list.front();
+		cv::Size msz = first_frame.size();
+		std::cout << "    first_frame.size().width = " << msz.width << std::endl;
+		std::cout << "    first_frame.size().height = " << msz.height << std::endl;
 
+		/*
+		We'll just handle the basic types here, otherwise I will
+		write a python script to handle generating this code.
+
+		#define CV_8U   0
+		#define CV_8S   1
+		#define CV_16U  2
+		#define CV_16S  3
+		#define CV_32S  4
+		#define CV_32F  5
+		#define CV_64F  6
+		#define CV_16F  7
+
+		*/
+
+		int tmp_type = first_frame.type();
+		std::string type_txt("UNSET");
+		if (tmp_type == CV_8U) {
+			type_txt.clear();
+			type_txt.append("CV_8U");
+		}
+		else if (tmp_type == CV_8S) {
+			type_txt.clear();
+			type_txt.append("CV_8S");
+		}
+		else if (tmp_type == CV_16U) {
+			type_txt.clear();
+			type_txt.append("CV_16U");
+		}
+		else if (tmp_type == CV_16S) {
+			type_txt.clear();
+			type_txt.append("CV_16S");
+		}
+		else if (tmp_type == CV_32S) {
+			type_txt.clear();
+			type_txt.append("CV_32S");
+		}
+		else if (tmp_type == CV_32F) {
+			type_txt.clear();
+			type_txt.append("CV_32F");
+		}
+		else if (tmp_type == CV_64F) {
+			type_txt.clear();
+			type_txt.append("CV_64F");
+		}
+		else if (tmp_type == CV_16F) {
+			type_txt.clear();
+			type_txt.append("CV_16F");
+		}
+
+		std::cout << "    first_frame.type() = " << type_txt << std::endl;
+
+		// Find the size of the frame in bytes
+		// https://stackoverflow.com/questions/26441072/finding-the-size-in-bytes-of-cvmat
+		size_t sizeInBytes = first_frame.step[0] * first_frame.rows;
+		std::cout << "sizeInBytes = " << sizeInBytes << std::endl;
+
+		// Check if the cv::mat is continuous (it should be...)
+		std::cout << "first_frame.isContinuous() = " << first_frame.isContinuous() << std::endl;
+
+	}
+	return 0;
+}
+
+
+// TODO: figure out how to copy the data out of the cv::mat into python.
+// https://stackoverflow.com/questions/26681713/convert-mat-to-array-vector-in-opencv
+//
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_number_of_frames() {
+	return frame_list.size();
+}
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_frame_size_in_bytes() {
+	size_t num_frames = frame_list.size();
+	//
+	if (num_frames > 0) {
+		cv::Mat first_frame = frame_list.front();
+		size_t sizeInBytes = first_frame.step[0] * first_frame.rows;
+		return sizeInBytes;
+	}
+	else {
+		return 0;
+	}
+}
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_image_width() {
+	size_t num_frames = frame_list.size();
+	//
+	if (num_frames > 0) {
+		cv::Mat first_frame = frame_list.front();
+		cv::Size msz = first_frame.size();
+		return msz.width;
+	}
+	else {
+		return 0;
+	}
+}
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_image_height() {
+	size_t num_frames = frame_list.size();
+	//
+	if (num_frames > 0) {
+		cv::Mat first_frame = frame_list.front();
+		cv::Size msz = first_frame.size();
+		return msz.height;
+	}
+	else {
+		return 0;
+	}
+}
+
+
+DLL_EXPORT int DLL_CALLSPEC read_oldest_frame(uint8_t* user_buffer) {
+	size_t num_frames = frame_list.size();
+	if (num_frames > 0) {
+		// Get the last (oldest) frame (we push_front when acquiring data).
+		cv::Mat frame = frame_list.back();
+		// Copy the frame into the user buffer. The user should have used
+		// get_frame_size_in_bytes() to prepare this buffer.
+		//
+		// TODO: figure out a better solution than calling get_frame_size_in_bytes()
+		// each time.
+		memcpy((void*)user_buffer, (void*)frame.data, get_frame_size_in_bytes());
+		// Pop the last frame now that we're done reading it.
+		frame_list.pop_back();
+		return 0;
+	}
+	else {
+		return -1;
+	}
+}
+
+
+DLL_EXPORT int DLL_CALLSPEC clear_frame_list() {
+	frame_list.clear();
+	return 0;
+}
 
 
 

@@ -137,7 +137,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>"C:\mjs\opencv-4.9.0\build\x64\vc16\lib\opencv_world490.lib";"C:\mjs\opencv-4.9.0\build\x64\vc16\lib\opencv_world490d.lib";"C:\Program Files\The Imaging Source Europe GmbH\ic4\lib\ic4core.lib";"C:\Program Files\The Imaging Source Europe GmbH\ic4\lib\ic4gui.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"C:\mjs\opencv-4.9.0\build\x64\vc16\lib\opencv_world490.lib";"C:\Program Files\The Imaging Source Europe GmbH\ic4\lib\ic4core.lib";"C:\Program Files\The Imaging Source Europe GmbH\ic4\lib\ic4gui.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

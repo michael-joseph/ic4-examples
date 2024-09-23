@@ -149,7 +149,10 @@ public:
 					// if it will add a time delay.
 					frame_list.clear();
 				}
-				frame_list.push_back(mat);
+				// Note, we need to clone the mat when we add it to the list,
+				// otherwise it just inserts a shallow copy to the list and
+				// the data isn't valid later.
+				frame_list.push_front(mat.clone());
 				frames_grabbed.store(frames_grabbed.load()+1);
 			}
 			else {
@@ -256,6 +259,44 @@ Calls worker_thread.join(), this shoul
 DLL_EXPORT int DLL_CALLSPEC join_interface();
 
 
+DLL_EXPORT int DLL_CALLSPEC set_frames_grabbed(size_t val);
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_frames_grabbed();
+
+
+DLL_EXPORT int DLL_CALLSPEC set_frames_to_grab(size_t val);
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_frames_to_grab();
+
+
+DLL_EXPORT int DLL_CALLSPEC print_info_on_frames();
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_number_of_frames();
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_frame_size_in_bytes();
+
+DLL_EXPORT size_t DLL_CALLSPEC get_image_width();
+
+DLL_EXPORT size_t DLL_CALLSPEC get_image_height();
+
+/*
+Reads the oldest frame. The caller should keep calling this until all frames
+are read to read one frame at a time. The caller should allocate user_buffer
+based on get_frame_size_in_bytes().
+
+@returns 0 if success, -1 if there were no frames in the frame_list.
+*/
+DLL_EXPORT int DLL_CALLSPEC read_oldest_frame(uint8_t* user_buffer);
+
+/*
+Clears the frame list. Use this if acquisition was aborted and you need to
+start from an empty frame list without reading all frames.
+*/
+DLL_EXPORT int DLL_CALLSPEC clear_frame_list();
 
 
 
