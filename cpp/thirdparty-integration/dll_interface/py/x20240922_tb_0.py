@@ -214,7 +214,11 @@ class pt_camera_dll():
 
 
     def read_oldest_frame(self, timeout_s=5):
-        """!"""
+        """!
+        Reads the oldest frame stored internally in the dll. This will throw a
+        ReadOldestFrameTimeoutError() exception if no frames are present after
+        the timeout duration (hardcoded timeout amount).
+        """
         d = np.zeros((self._dll.get_frame_size_in_bytes(),), dtype=np.uint8)
         start_time = time.time()
         err = -1
@@ -251,8 +255,6 @@ if(__name__ == "__main__"):
     dll._dll.set_frames_to_grab(49)
     dll._dll.set_frames_grabbed(0)
 
-
-
     ############################################################################
 
     dll.start()
@@ -263,7 +265,6 @@ if(__name__ == "__main__"):
 
     dll.stop()
     dll.join()
-
 
     dll._dll.print_info_on_frames()
 
