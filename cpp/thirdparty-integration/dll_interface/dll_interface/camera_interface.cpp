@@ -38,6 +38,16 @@ ic4interop::OpenCV::wrap().
 std::list<cv::Mat> frame_list;
 
 
+/*
+Last frame's width.
+*/
+std::atomic<size_t> last_frame_width;
+
+/*
+Last frame's height.
+*/
+std::atomic<size_t> last_frame_height;
+
 
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
@@ -332,30 +342,12 @@ DLL_EXPORT size_t DLL_CALLSPEC get_frame_size_in_bytes() {
 
 
 DLL_EXPORT size_t DLL_CALLSPEC get_image_width() {
-	size_t num_frames = frame_list.size();
-	//
-	if (num_frames > 0) {
-		cv::Mat first_frame = frame_list.front();
-		cv::Size msz = first_frame.size();
-		return msz.width;
-	}
-	else {
-		return 0;
-	}
+	return last_frame_width.load();
 }
 
 
 DLL_EXPORT size_t DLL_CALLSPEC get_image_height() {
-	size_t num_frames = frame_list.size();
-	//
-	if (num_frames > 0) {
-		cv::Mat first_frame = frame_list.front();
-		cv::Size msz = first_frame.size();
-		return msz.height;
-	}
-	else {
-		return 0;
-	}
+	return last_frame_height.load();
 }
 
 

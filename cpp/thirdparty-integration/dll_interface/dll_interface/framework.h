@@ -35,6 +35,16 @@ extern std::atomic<size_t> frames_grabbed;
 extern std::atomic<size_t> frames_to_grab;
 extern std::list<cv::Mat> frame_list;
 
+/*
+Last frame's width.
+*/
+extern std::atomic<size_t> last_frame_width;
+
+/*
+Last frame's height.
+*/
+extern std::atomic<size_t> last_frame_height;
+
 
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
@@ -134,6 +144,13 @@ public:
 
 		// Create a cv::Mat
 		auto mat = ic4interop::OpenCV::wrap(*buffer);
+
+		// Update the last frame width and height. The code assumes that the frame 
+		// sizes are not changing over the course of an acquisition!
+		cv::Size mat_sz = mat.size();
+		last_frame_height.store(mat_sz.height);
+		last_frame_width.store(mat_sz.width);
+
 
 		/*
 		Acquire the frame if enabled.
