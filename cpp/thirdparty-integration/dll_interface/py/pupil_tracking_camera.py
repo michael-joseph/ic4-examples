@@ -273,15 +273,20 @@ class pt_camera_dll():
     def get_frames_to_grab(self):
         """!
         """
-        return self._dll.get_frames_to_grab()
+        # return self._dll.get_frames_to_grab()
+        return self._dll.get_frames_grabbed()
 
 
-    def read_all_frames_into_frame_list(self):
+    def read_all_frames_into_frame_list(self, only_read_available=True):
         """!
         Function to read all frames (according to get_frames_to_grab()) into
         an internal list.
         """
         self._frame_list = []
+        if(only_read_available):
+            frames_to_read = self._dll.get_frames_grabbed()
+        else:
+            frames_to_read = self.get_frames_to_grab()
         for n in range(0, self.get_frames_to_grab()):
             self._frame_list.append(self.read_oldest_frame())
 
@@ -334,7 +339,7 @@ if(__name__ == "__main__"):
     x.start()
     ###
     # arm
-    x.arm(3)
+    x.arm(3000)
 
 
     # Change to external triggering for a few seconds
@@ -354,7 +359,7 @@ if(__name__ == "__main__"):
 
     ###
     # arm
-    x.arm(20)
+    x.arm(2000)
     # wait for frames
     time.sleep(3)
     # Read the frames
