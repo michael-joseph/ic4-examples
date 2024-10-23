@@ -231,6 +231,10 @@ private:
 };
 
 
+/*
+Sets the external trigger enable.
+*/
+DLL_EXPORT int DLL_CALLSPEC set_external_trigger_enable(bool);
 
 /*
 Main function for the worker thread that handles reading frames from

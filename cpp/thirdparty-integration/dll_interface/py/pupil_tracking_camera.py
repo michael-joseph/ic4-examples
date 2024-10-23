@@ -1,15 +1,17 @@
+#!/usr/bin/env python
 """!
-@file x20240922_tb_0.py
+@file pupil_tracking_camera.py
 
-This testbench works with the dll that is updated to acquire camera frames.
-This adds to the previous testbench (x20240819_tb_0.py).
+Python interface for the pupil tracking camera dll. This version just shows the
+live data feed from the camera, acquiring data isn't supported yet.
 
 @author mjs
 
-2024-09-22
+2024-08-20
 
 Created.
 """
+
 
 import pathlib
 import ctypes
@@ -97,12 +99,18 @@ class ReadOldestFrameTimeoutError(Exception):
     pass
 
 
+class ImageWidthAndHeightRefreshNeededError(Exception):
+    """!"""
+    pass
+
+
 class pt_camera_dll():
     """!"""
-    def __init__(self):
-        path_to_dll = pathlib.Path(
-            r"C:\Users\ohns-user\Documents\GitHub\ic4-examples\cpp\thirdparty-integration\dll_interface\dll_interface\x64\Release\dll_interface.dll"
-        )
+    def __init__(self, path_to_dll=None):
+        if(path_to_dll is None):
+            path_to_dll = pathlib.Path(get_script_dir()) / pathlib.Path(
+                r"..\dll\pupil_tracking_camera_dll_interface.dll"
+            )
 
         # https://stackoverflow.com/questions/59330863/cant-import-dll-module-in-python
         # This would not load correctly without winmode=0. I'm guessing the opencv
@@ -140,6 +148,11 @@ class pt_camera_dll():
         # DLL_EXPORT int DLL_CALLSPEC join_interface();
         dll.join_interface.argtypes = []
         dll.join_interface.restypes = ctypes.c_int
+
+
+        # int set_external_trigger_enable(bool val)
+        dll.set_external_trigger_enable.argtypes = [ctypes.c_bool]
+        dll.set_external_trigger_enable.restypes = ctypes.c_int
 
 
         # DLL_EXPORT int DLL_CALLSPEC set_frames_grabbed(size_t val);
@@ -194,14 +207,33 @@ class pt_camera_dll():
 
         self._dll = dll
 
-
         self._height = 0
         self._width = 0
 
+        self._need_to_refresh_height_width = True
+
 
     def start(self):
-        """!"""
+        """!
+        Starts the camera interface. Call this once after opening the DLL.
+        """
         self._dll.start_interface()
+
+
+    def arm(self, frames_to_grab):
+        """!
+        Prepares the dll interface to acquire another sequence of frames.
+        """
+        # ensure that we're not grabbing any more frames by setting the frames
+        # to grab to -1.
+        self._dll.set_frames_to_grab(-1)
+        # Clear the frame list
+        self._dll.clear_frame_list()
+        # Set the frames grabbed to 0.
+        self._dll.set_frames_grabbed(0)
+        # Set the frames to grab to the desired number, this will start
+        # acquiring frames immediately when they arrive.
+        self._dll.set_frames_to_grab(frames_to_grab)
 
 
     def fetch_image_sizes(self):
@@ -211,14 +243,17 @@ class pt_camera_dll():
         """
         self._height = self._dll.get_image_height()
         self._width = self._dll.get_image_width()
+        if(self._height != 0 and self._width != 0):
+            # If both are nonzero then we sucessfully fetched the image sizes.
+            self._need_to_refresh_height_width = False
+        else:
+            # If both are not zero then we still need to fetch the image sizes
+            # again.
+            self._need_to_refresh_height_width = True
 
 
     def read_oldest_frame(self, timeout_s=5):
-        """!
-        Reads the oldest frame stored internally in the dll. This will throw a
-        ReadOldestFrameTimeoutError() exception if no frames are present after
-        the timeout duration (hardcoded timeout amount).
-        """
+        """!"""
         d = np.zeros((self._dll.get_frame_size_in_bytes(),), dtype=np.uint8)
         start_time = time.time()
         err = -1
@@ -226,12 +261,44 @@ class pt_camera_dll():
             err = self._dll.read_oldest_frame(d)
             if(time.time() - start_time > timeout_s):
                 raise ReadOldestFrameTimeoutError()
+        if(self._need_to_refresh_height_width):
+            self.fetch_image_sizes()
+            if(self._need_to_refresh_height_width):
+                raise ImageWidthAndHeightRefreshNeededError()
+
         d = d.reshape((self._height, self._width))
         return d
 
 
     def get_frames_to_grab(self):
-        return dll._dll.get_frames_to_grab()
+        """!
+        """
+        return self._dll.get_frames_to_grab()
+
+
+    def read_all_frames_into_frame_list(self):
+        """!
+        Function to read all frames (according to get_frames_to_grab()) into
+        an internal list.
+        """
+        self._frame_list = []
+        for n in range(0, self.get_frames_to_grab()):
+            self._frame_list.append(self.read_oldest_frame())
+
+
+    def save_frame_list_to_hdf5(self, path_to_hdf5):
+        """!"""
+        with h5py.File(path_to_hdf5.as_posix(), 'a') as f:
+            f.create_group(
+                name='/pt_camera',
+            )
+            if(len(self._frame_list) > 0):
+                # only save if we acquired at least 1 frame.
+                f.create_dataset(
+                    name='/pt_camera/data',
+                    data=np.stack(self._frame_list, axis=0),
+                )
+
 
 
     def stop(self):
@@ -247,34 +314,57 @@ class pt_camera_dll():
 
 
 
-################################################################
+
+
+
+################################################################################
+# Testbench acquisition (assumes internal triggering or external triggers will
+# be provided from elsewhere).
+################################################################################
 if(__name__ == "__main__"):
-    #
-    dll = pt_camera_dll()
+    import matplotlib.pyplot as plt
 
-    dll._dll.set_frames_to_grab(49)
-    dll._dll.set_frames_grabbed(0)
 
-    ############################################################################
+    x = pt_camera_dll(
+        path_to_dll=pathlib.Path(r"C:\Users\ohns-user\Documents\GitHub\ic4-examples\cpp\thirdparty-integration\dll_interface\dll_interface\x64\Release\dll_interface.dll")
+    )
 
-    dll.start()
+    x._dll.set_external_trigger_enable(False)
 
+    x.start()
+    ###
+    # arm
+    x.arm(3)
+
+
+    # Change to external triggering for a few seconds
+    time.sleep(3)
+    x._dll.set_external_trigger_enable(True)
+    time.sleep(4)
+    # Change back to internal triggering
+    x._dll.set_external_trigger_enable(False)
+
+    # wait for frames
     time.sleep(10)
+    # Read the frames
+    acq1_frames = []
+    for n in range(0, x.get_frames_to_grab()):
+        acq1_frames.append(x.read_oldest_frame())
 
-    dll.fetch_image_sizes()
 
-    dll.stop()
-    dll.join()
+    ###
+    # arm
+    x.arm(20)
+    # wait for frames
+    time.sleep(3)
+    # Read the frames
+    acq2_frames = []
+    for n in range(0, x.get_frames_to_grab()):
+        acq2_frames.append(x.read_oldest_frame())
 
-    dll._dll.print_info_on_frames()
+    x.stop()
+    x.join()
 
-    frame_list = []
-    times_to_read = dll.get_frames_to_grab()
-    for i in range(0, times_to_read):
-        frame_list.append(dll.read_oldest_frame())
-
-    plt.imshow(frame_list[-1])
-    plt.show()
 
 
 

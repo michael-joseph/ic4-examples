@@ -48,6 +48,11 @@ Last frame's height.
 */
 std::atomic<size_t> last_frame_height;
 
+/*
+Enable or disable the external trigger, this will take effect immediately.
+*/
+std::atomic<bool> external_trigger_enable = false;
+
 
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
@@ -100,18 +105,64 @@ void print_streamStatistics(ic4::Grabber::StreamStatistics stats) {
 }
 
 
+DLL_EXPORT int DLL_CALLSPEC set_external_trigger_enable(bool val) {
+	external_trigger_enable.store(val);
+	return 0;
+}
+
+
+
 void example_imagebuffer_opencv_snap()
 {
+	ic4::Error err;
+
 	// Create a new Grabber and open the first device. We should only have
 	// one compatible camera connected so this will be safe.
 	auto devices = ic4::DeviceEnum::enumDevices();
 	ic4::Grabber grabber;
 	grabber.deviceOpen(devices.front());
 
-	// Configure the camera
+	/*****************************************************************************
+	* Configure the camera
+	*/ 
+
+	auto map = grabber.devicePropertyMap();
+
+	// Reset all device settings to default
+	// Not all devices support this, so ignore possible errors.
+	map.setValue(ic4::PropId::UserSetSelector, "Default", ic4::Error::Ignore());
+	map.executeCommand(ic4::PropId::UserSetLoad, ic4::Error::Ignore());
+
+
+	// Enable trigger mode.
+	if (external_trigger_enable.load()) {
+		if (!map.setValue(ic4::PropId::TriggerMode, "On", err)){
+			std::cerr << "Failed to enable trigger mode: " << err.message() << std::endl;
+			return;
+		}
+	}
+	
+
+	// Set trigger polarity to RisingEdge (actually called TriggerActivation)
+	if (!map.setValue(ic4::PropId::TriggerActivation, "RisingEdge", err)){
+		std::cerr << "Failed to set trigger polarity: " << err.message() << std::endl;
+		return;
+	}
+
+	// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
+	if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
+		std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
+		return;
+	}
+
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
 	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::Mono8);
+
+
+	/*****************************************************************************
+	* 
+	*/
 
 	// Create a sink that converts the data to something that OpenCV can work with (e.g. BGR8)
 	std::cout << "auto listener = customQueueSinkListener();" << std::endl;
@@ -124,11 +175,26 @@ void example_imagebuffer_opencv_snap()
 	std::cout << "grabber.streamSetup(sink);" << std::endl;
 	grabber.streamSetup(sink);
 
+	bool last_external_trigger_enable = external_trigger_enable.load();
+
 	// https://www.asciitable.com/
 	int key_code = -1;
-
 	try {
 		while (key_code != 27 && !stop_all_flag.load()) {
+			//
+			if (last_external_trigger_enable != external_trigger_enable.load()) {
+				if (external_trigger_enable.load()) {
+					if (!map.setValue(ic4::PropId::TriggerMode, "On", err)) {
+						std::cerr << "Failed to enable trigger mode: " << err.message() << std::endl;
+					}
+				}
+				else {
+					if (!map.setValue(ic4::PropId::TriggerMode, "Off", err)) {
+						std::cerr << "Failed to disable trigger mode: " << err.message() << std::endl;
+					}
+				}
+				last_external_trigger_enable = external_trigger_enable.load();
+			}
 			// make the window update (required).
 			//  It returns the code of the pressed key or -1 if no key was pressed before the specified time had elapsed.
 			key_code = last_key.load();
