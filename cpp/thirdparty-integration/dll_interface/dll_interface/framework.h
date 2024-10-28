@@ -29,11 +29,14 @@
 #define DLL_EXPORT extern "C" __declspec(dllexport)
 #define DLL_CALLSPEC __stdcall
 
+#define FRAME_FPS_LIST_MAX_LEN 50
+
 
 extern std::mutex camera_frame_acq_mutex;
 extern std::atomic<size_t> frames_grabbed;
 extern std::atomic<size_t> frames_to_grab;
 extern std::list<cv::Mat> frame_list;
+extern std::list<double> frame_fps_list;
 
 /*
 Last frame's width.
@@ -185,30 +188,52 @@ public:
 		cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
 
 		// Calculate the FPS to display on the reduced image.
-		int fps = (int)round(1.0 / (1e-9 * (double)std::chrono::duration_cast<std::chrono::nanoseconds>(
+		double fps_d = 1.0 / (1e-9 * ((double)std::chrono::duration_cast<std::chrono::nanoseconds>(
 			std::chrono::high_resolution_clock::now()
 			- frame_end_time
 		).count()));
+		int fps = (int)round(fps_d);
+		frame_end_time = std::chrono::high_resolution_clock::now();
+
+
+		// Put the FPS into the list so we can calculate a running FPS
+		frame_fps_list.push_front(fps_d);
+		if (frame_fps_list.size() > FRAME_FPS_LIST_MAX_LEN) {
+			// The list length is more than the max, remove the list one
+			// before we calculate the average FPS.
+			frame_fps_list.pop_back();
+		}
+		// calculate the average fps
+		double fps_average = 0;
+		double count_for_avg = 0;
+		for (auto const& i : frame_fps_list) {
+			fps_average += i;
+			count_for_avg += 1;
+		}
+		//fps_average = fps_average / ((double)frame_fps_list.size());
+		fps_average /= count_for_avg;
+
 
 
 		/*
 		FYI: no easy newline functionality in putText
 		https://stackoverflow.com/questions/27647424/opencv-puttext-new-line-character
 		*/
-		cv::putText(
-			mat_decimated,
-			std::to_string(fps)
-			+ std::string(" fps, ctr: ")
-			+ std::to_string(counter),
-			cv::Point(10, 30),
-			cv::FONT_HERSHEY_SIMPLEX,
-			1.0,
-			cv::Scalar(0.5, 0.0, 0.0, 1.0)
-		);
+		if (counter % 5 == 0) {
+			cv::putText(
+				mat_decimated,
+				std::to_string((int)round(fps_average))
+				+ std::string(" fps, ctr: ")
+				+ std::to_string(counter),
+				cv::Point(10, 30),
+				cv::FONT_HERSHEY_SIMPLEX,
+				1.0,
+				cv::Scalar(0.5, 0.0, 0.0, 1.0)
+			);
 
-		//// Update image, I don't think this updates until waitKey is called.			
-		cv::imshow("display", mat_decimated);
-
+			//// Update image, I don't think this updates until waitKey is called.			
+			cv::imshow("display", mat_decimated);
+		}
 
 		// Required to update the opencv imshow. We aren't doing anything
 		// here with the actual key value. This is leftover from the exe
@@ -220,7 +245,7 @@ public:
 		buffer.reset();
 
 		counter++;
-		frame_end_time = std::chrono::high_resolution_clock::now();
+		
 	}
 
 private:

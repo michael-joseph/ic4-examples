@@ -39,6 +39,12 @@ std::list<cv::Mat> frame_list;
 
 
 /*
+List of FPS values to allow for calculating an average FPS.
+*/
+std::list<double> frame_fps_list;
+
+
+/*
 Last frame's width.
 */
 std::atomic<size_t> last_frame_width;
@@ -134,12 +140,71 @@ void example_imagebuffer_opencv_snap()
 	map.executeCommand(ic4::PropId::UserSetLoad, ic4::Error::Ignore());
 
 
+	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
+	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
+	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::Mono8);
+
+
+	//// Set GainAuto
+	//if (!map.setValue(ic4::PropId::GainAuto, "Off", err)) {
+	//	std::cerr << "Failed to set GainAuto: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	//// ExposureAuto "False"
+	//if (!map.setValue(ic4::PropId::ExposureAuto, "Off", err)) {
+	//	std::cerr << "Failed to set ExposureAuto: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	//// Set ExposureTime to 20us (min), maybe this will let me get the full FPS?
+	//if (!map.setValue(ic4::PropId::ExposureTime, 5.0, err)) {
+	//	std::cerr << "Failed to set ExposureTime: " << err.message() << std::endl;
+	//	return;
+	//}
+
+
+	//// TriggerOverlap "Off" "Readout"
+	//if (!map.setValue(ic4::PropId::TriggerOverlap, "Readout", err)) {
+	//	std::cerr << "Failed to set TriggerOverlap: " << err.message() << std::endl;
+	//	return;
+	//}
+
+
+	////// set DecimationHorizontal
+	//if (!map.setValue(ic4::PropId::DecimationHorizontal, 2, err)) {
+	//	std::cerr << "Failed to set DecimationHorizontal: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	////// set DecimationVertical
+	//if (!map.setValue(ic4::PropId::DecimationVertical, 2, err)) {
+	//	std::cerr << "Failed to set DecimationVertical: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	//// Set Width (max 2448), half 1224
+	//if (!map.setValue(ic4::PropId::Width, 1920, err)) {
+	//	std::cerr << "Failed to set Width: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	//// Set Height (max 2048), half 1024
+	//if (!map.setValue(ic4::PropId::Height, 1080, err)) {
+	//	std::cerr << "Failed to set Height: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	// Set AcquisitionFrameRate 
+	if (!map.setValue(ic4::PropId::AcquisitionFrameRate, 75.0, err)) {
+		std::cerr << "Failed to set AcquisitionFrameRate: " << err.message() << std::endl;
+		return;
+	}
+
 	// Enable trigger mode.
-	if (external_trigger_enable.load()) {
-		if (!map.setValue(ic4::PropId::TriggerMode, "On", err)){
-			std::cerr << "Failed to enable trigger mode: " << err.message() << std::endl;
-			return;
-		}
+	if (!map.setValue(ic4::PropId::TriggerMode, "On", err)){
+		std::cerr << "Failed to enable trigger mode: " << err.message() << std::endl;
+		return;
 	}
 	
 
@@ -149,15 +214,30 @@ void example_imagebuffer_opencv_snap()
 		return;
 	}
 
-	// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
-	if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
-		std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
+	//// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
+	//if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
+	//	std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	//// GPOut
+	//if (!map.setValue(ic4::PropId::GPOut, 1, err)) {
+	//	std::cerr << "Failed to set GPOut: " << err.message() << std::endl;
+	//	return;
+	//}
+
+	// StrobeOperation
+	if (!map.setValue(ic4::PropId::StrobeOperation, "Exposure", err)) {
+		std::cerr << "Failed to set StrobeOperation: " << err.message() << std::endl;
 		return;
 	}
 
-	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
-	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
-	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::Mono8);
+	// Set StrobeEnable for debugging
+	if (!map.setValue(ic4::PropId::StrobeEnable, "On", err)) {
+		std::cerr << "Failed to set StrobeEnable: " << err.message() << std::endl;
+		return;
+	}
+	
 
 
 	/*****************************************************************************

@@ -343,29 +343,28 @@ if(__name__ == "__main__"):
 
 
     # Change to external triggering for a few seconds
-    time.sleep(3)
+    time.sleep(5)
     x._dll.set_external_trigger_enable(True)
-    time.sleep(4)
+    time.sleep(2)
     # Change back to internal triggering
     x._dll.set_external_trigger_enable(False)
 
     # wait for frames
-    time.sleep(10)
+    time.sleep(5)
     # Read the frames
     acq1_frames = []
     for n in range(0, x.get_frames_to_grab()):
         acq1_frames.append(x.read_oldest_frame())
 
-
-    ###
-    # arm
-    x.arm(2000)
-    # wait for frames
-    time.sleep(3)
-    # Read the frames
-    acq2_frames = []
-    for n in range(0, x.get_frames_to_grab()):
-        acq2_frames.append(x.read_oldest_frame())
+    # ###
+    # # arm
+    # x.arm(2000)
+    # # wait for frames
+    # time.sleep(1)
+    # # Read the frames
+    # acq2_frames = []
+    # for n in range(0, x.get_frames_to_grab()):
+    #     acq2_frames.append(x.read_oldest_frame())
 
     x.stop()
     x.join()
