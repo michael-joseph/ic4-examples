@@ -219,21 +219,21 @@ public:
 		FYI: no easy newline functionality in putText
 		https://stackoverflow.com/questions/27647424/opencv-puttext-new-line-character
 		*/
-		if (counter % 5 == 0) {
-			cv::putText(
-				mat_decimated,
-				std::to_string((int)round(fps_average))
-				+ std::string(" fps, ctr: ")
-				+ std::to_string(counter),
-				cv::Point(10, 30),
-				cv::FONT_HERSHEY_SIMPLEX,
-				1.0,
-				cv::Scalar(0.5, 0.0, 0.0, 1.0)
-			);
+		//if (counter % 5 == 0) {
+		cv::putText(
+			mat_decimated,
+			std::to_string((int)round(fps_average))
+			+ std::string(" fps, ctr: ")
+			+ std::to_string(counter),
+			cv::Point(10, 30),
+			cv::FONT_HERSHEY_SIMPLEX,
+			1.0,
+			cv::Scalar(0.5, 0.0, 0.0, 1.0)
+		);
 
-			//// Update image, I don't think this updates until waitKey is called.			
-			cv::imshow("display", mat_decimated);
-		}
+		//// Update image, I don't think this updates until waitKey is called.			
+		cv::imshow("display", mat_decimated);
+		//}
 
 		// Required to update the opencv imshow. We aren't doing anything
 		// here with the actual key value. This is leftover from the exe

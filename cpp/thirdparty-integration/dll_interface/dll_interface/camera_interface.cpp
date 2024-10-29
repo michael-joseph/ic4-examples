@@ -201,8 +201,8 @@ void example_imagebuffer_opencv_snap()
 		return;
 	}
 
-	// Enable trigger mode.
-	if (!map.setValue(ic4::PropId::TriggerMode, "On", err)){
+	// Enable/Disable trigger mode. If this in "On" then external trig is enabled.
+	if (!map.setValue(ic4::PropId::TriggerMode, "Off", err)){
 		std::cerr << "Failed to enable trigger mode: " << err.message() << std::endl;
 		return;
 	}
