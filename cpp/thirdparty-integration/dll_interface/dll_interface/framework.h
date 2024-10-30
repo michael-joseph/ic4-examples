@@ -187,6 +187,13 @@ public:
 		auto dsize = cv::Size(0, 0);
 		cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
 
+		// Convert to RGB for display
+		// backtorgb = cv2.cvtColor(gray,cv2.COLOR_GRAY2RGB)
+		auto mat_decimated_rgb = cv::Mat();
+		cv::cvtColor(mat_decimated, mat_decimated_rgb, cv::COLOR_GRAY2RGBA);
+
+
+
 		// Calculate the FPS to display on the reduced image.
 		double fps_d = 1.0 / (1e-9 * ((double)std::chrono::duration_cast<std::chrono::nanoseconds>(
 			std::chrono::high_resolution_clock::now()
@@ -218,21 +225,41 @@ public:
 		/*
 		FYI: no easy newline functionality in putText
 		https://stackoverflow.com/questions/27647424/opencv-puttext-new-line-character
+
+		https://docs.opencv.org/4.x/d6/d6e/group__imgproc__draw.html#ga0f9314ea6e35f99bb23f29567fc16e11
 		*/
 		//if (counter % 5 == 0) {
 		cv::putText(
-			mat_decimated,
+			mat_decimated_rgb,
 			std::to_string((int)round(fps_average))
 			+ std::string(" fps, ctr: ")
 			+ std::to_string(counter),
 			cv::Point(10, 30),
-			cv::FONT_HERSHEY_SIMPLEX,
+			cv::FONT_HERSHEY_PLAIN,
 			1.0,
-			cv::Scalar(0.5, 0.0, 0.0, 1.0)
+			cv::Scalar(0.0, 0.0, 255.0, 0.0)
 		);
 
-		//// Update image, I don't think this updates until waitKey is called.			
-		cv::imshow("display", mat_decimated);
+		//// Update image, I don't think this updates until waitKey is called.
+
+		// I can't seem to put a red circle. Is this because it's already a grayscale
+		// image? So I need to convert mat_decimated to RGB? NOTE: this is BGRA.
+		// Does the circle line color alpha not do anything?
+		auto mat_decimated_size = mat_decimated_rgb.size();
+		cv::circle(
+			mat_decimated_rgb,
+			cv::Point(
+				mat_decimated_size.width/2, 
+				mat_decimated_size.height/2
+			),
+			20,
+			cv::Scalar(0.0, 0.0, 255.0, 0.0),
+			1
+		);
+		cv::imshow("display", mat_decimated_rgb);
+		
+
+
 		//}
 
 		// Required to update the opencv imshow. We aren't doing anything

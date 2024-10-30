@@ -345,7 +345,7 @@ if(__name__ == "__main__"):
     # Change to external triggering for a few seconds
     time.sleep(5)
     x._dll.set_external_trigger_enable(True)
-    time.sleep(2)
+    time.sleep(20)
     # Change back to internal triggering
     x._dll.set_external_trigger_enable(False)
 

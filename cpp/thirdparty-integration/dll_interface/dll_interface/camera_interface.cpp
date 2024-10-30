@@ -145,23 +145,47 @@ void example_imagebuffer_opencv_snap()
 	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::Mono8);
 
 
-	//// Set GainAuto
-	//if (!map.setValue(ic4::PropId::GainAuto, "Off", err)) {
-	//	std::cerr << "Failed to set GainAuto: " << err.message() << std::endl;
+	// Set GainAuto
+	if (!map.setValue(ic4::PropId::GainAuto, "Continuous", err)) {
+		std::cerr << "Failed to set GainAuto: " << err.message() << std::endl;
+		return;
+	}
+
+	// ExposureAuto "Off" "Continuous"
+	if (!map.setValue(ic4::PropId::ExposureAuto, "Continuous", err)) {
+		std::cerr << "Failed to set ExposureAuto: " << err.message() << std::endl;
+		return;
+	}
+
+	// Set ExposureTime to 20us (min), maybe this will let me get the full FPS?
+	if (!map.setValue(ic4::PropId::ExposureTime, 20.0, err)) {
+		std::cerr << "Failed to set ExposureTime: " << err.message() << std::endl;
+		return;
+	}
+
+	// ExposureAutoLowerLimit
+	if (!map.setValue(ic4::PropId::ExposureAutoLowerLimit, 20.0, err)) {
+		std::cerr << "Failed to set ExposureAutoLowerLimit: " << err.message() << std::endl;
+		return;
+	}
+
+	//// ExposureAutoLowerLimitAuto
+	//if (!map.setValue(ic4::PropId::ExposureAutoLowerLimitAuto, 20.0, err)) {
+	//	std::cerr << "Failed to set ExposureAutoLowerLimitAuto: " << err.message() << std::endl;
 	//	return;
 	//}
 
-	//// ExposureAuto "False"
-	//if (!map.setValue(ic4::PropId::ExposureAuto, "Off", err)) {
-	//	std::cerr << "Failed to set ExposureAuto: " << err.message() << std::endl;
-	//	return;
-	//}
+	// ExposureAutoUpperLimit
+	if (!map.setValue(ic4::PropId::ExposureAutoUpperLimit, 100.0, err)) {
+		std::cerr << "Failed to set ExposureAutoUpperLimit: " << err.message() << std::endl;
+		return;
+	}
 
-	//// Set ExposureTime to 20us (min), maybe this will let me get the full FPS?
-	//if (!map.setValue(ic4::PropId::ExposureTime, 5.0, err)) {
-	//	std::cerr << "Failed to set ExposureTime: " << err.message() << std::endl;
-	//	return;
-	//}
+	// ExposureAutoUpperLimitAuto
+	if (!map.setValue(ic4::PropId::ExposureAutoUpperLimitAuto, "On", err)) {
+		std::cerr << "Failed to set ExposureAutoUpperLimitAuto: " << err.message() << std::endl;
+		return;
+	}
 
 
 	//// TriggerOverlap "Off" "Readout"
@@ -214,11 +238,11 @@ void example_imagebuffer_opencv_snap()
 		return;
 	}
 
-	//// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
-	//if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
-	//	std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
-	//	return;
-	//}
+	// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
+	if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
+		std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
+		return;
+	}
 
 	//// GPOut
 	//if (!map.setValue(ic4::PropId::GPOut, 1, err)) {
