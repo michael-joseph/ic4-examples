@@ -205,6 +205,40 @@ class pt_camera_dll():
         dll.clear_frame_list.argtypes = []
         dll.clear_frame_list.restypes = ctypes.c_int
 
+        # DLL_EXPORT bool DLL_CALLSPEC get_circle_plot_enable()
+        dll.get_circle_plot_enable.argtypes = []
+        dll.get_circle_plot_enable.restypes = [ctypes.c_bool]
+
+        # DLL_EXPORT void DLL_CALLSPEC set_circle_plot_enable(bool val)
+        dll.set_circle_plot_enable.argtypes = [ctypes.c_bool]
+        dll.set_circle_plot_enable.restypes = []
+
+        # DLL_EXPORT double DLL_CALLSPEC get_circle_offset_w()
+        dll.get_circle_offset_w.argtypes = []
+        dll.get_circle_offset_w.restypes = [ctypes.c_double]
+
+        # DLL_EXPORT void DLL_CALLSPEC set_circle_offset_w(double val)
+        dll.set_circle_offset_w.argtypes = [ctypes.c_double]
+        dll.set_circle_offset_w.restypes = []
+
+        # DLL_EXPORT double DLL_CALLSPEC get_circle_offset_h()
+        dll.get_circle_offset_h.argtypes = []
+        dll.get_circle_offset_h.restypes = [ctypes.c_double]
+
+        # DLL_EXPORT void DLL_CALLSPEC set_circle_offset_h(double val)
+        dll.set_circle_offset_h.argtypes = [ctypes.c_double]
+        dll.set_circle_offset_h.restypes = []
+
+        # DLL_EXPORT double DLL_CALLSPEC get_circle_radius()
+        dll.get_circle_radius.argtypes = []
+        dll.get_circle_radius.restypes = [ctypes.c_double]
+
+        #
+        # DLL_EXPORT void DLL_CALLSPEC set_circle_radius(double val)
+        dll.set_circle_radius.argtypes = [ctypes.c_double]
+        dll.set_circle_radius.restypes = []
+
+
         self._dll = dll
 
         self._height = 0
@@ -343,9 +377,17 @@ if(__name__ == "__main__"):
 
 
     # Change to external triggering for a few seconds
+    x._dll.set_circle_offset_h(-35)
+    x._dll.set_circle_offset_w(35)
+
+    x._dll.set_circle_plot_enable(True)
+    x._dll.set_circle_radius(8)
+
     time.sleep(5)
+
     x._dll.set_external_trigger_enable(True)
-    time.sleep(20)
+    time.sleep(2)
+
     # Change back to internal triggering
     x._dll.set_external_trigger_enable(False)
 

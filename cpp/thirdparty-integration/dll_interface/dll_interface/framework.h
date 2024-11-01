@@ -37,6 +37,11 @@ extern std::atomic<size_t> frames_grabbed;
 extern std::atomic<size_t> frames_to_grab;
 extern std::list<cv::Mat> frame_list;
 extern std::list<double> frame_fps_list;
+extern std::atomic<bool> circle_plot_enable;
+extern std::atomic<double> circle_offset_w;
+extern std::atomic<double> circle_offset_h;
+extern std::atomic<double> circle_radius;
+
 
 /*
 Last frame's width.
@@ -246,16 +251,30 @@ public:
 		// image? So I need to convert mat_decimated to RGB? NOTE: this is BGRA.
 		// Does the circle line color alpha not do anything?
 		auto mat_decimated_size = mat_decimated_rgb.size();
-		cv::circle(
-			mat_decimated_rgb,
-			cv::Point(
-				mat_decimated_size.width/2, 
-				mat_decimated_size.height/2
-			),
-			20,
-			cv::Scalar(0.0, 0.0, 255.0, 0.0),
-			1
-		);
+		if (circle_plot_enable.load()) {
+			// white outline for circle
+			cv::circle(
+				mat_decimated_rgb,
+				cv::Point(
+					mat_decimated_size.width / 2 + circle_offset_w.load(),
+					mat_decimated_size.height / 2 + circle_offset_h.load()
+				),
+				circle_radius.load(),
+				cv::Scalar(255.0, 255.0, 255.0, 0.0),
+				2
+			);
+			// red circle
+			cv::circle(
+				mat_decimated_rgb,
+				cv::Point(
+					mat_decimated_size.width / 2 + circle_offset_w.load(),
+					mat_decimated_size.height / 2 + circle_offset_h.load()
+				),
+				circle_radius.load(),
+				cv::Scalar(0.0, 0.0, 255.0, 0.0),
+				1
+			);
+		}
 		cv::imshow("display", mat_decimated_rgb);
 		
 

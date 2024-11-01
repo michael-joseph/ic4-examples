@@ -59,6 +59,29 @@ Enable or disable the external trigger, this will take effect immediately.
 */
 std::atomic<bool> external_trigger_enable = false;
 
+/*
+Whether or not to plot the center circle on the video feed.
+*/
+std::atomic<bool> circle_plot_enable = true;
+
+
+/*
+Width offset of the center circle relative to the middle of the image.
+*/
+std::atomic<double> circle_offset_w = 0;
+
+
+/*
+Height offset of the center circle relative to the middle of the image.
+*/
+std::atomic<double> circle_offset_h = 0;
+
+
+/*
+Size of the center circle
+*/
+std::atomic<double> circle_radius = 20;
+
 
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
@@ -406,6 +429,7 @@ DLL_EXPORT int DLL_CALLSPEC set_frames_to_grab(size_t val) {
 }
 
 
+
 DLL_EXPORT size_t DLL_CALLSPEC get_frames_to_grab() {
 	return frames_to_grab.load();
 }
@@ -539,6 +563,41 @@ DLL_EXPORT int DLL_CALLSPEC read_oldest_frame(uint8_t* user_buffer) {
 	else {
 		return -1;
 	}
+}
+
+DLL_EXPORT bool DLL_CALLSPEC get_circle_plot_enable() {
+	return circle_plot_enable.load();
+}
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_plot_enable(bool val) {
+	circle_plot_enable.store(val);
+}
+
+
+DLL_EXPORT double DLL_CALLSPEC get_circle_offset_w() {
+	return circle_offset_w.load();
+}
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_offset_w(double val) {
+	circle_offset_w.store(val);
+}
+
+
+DLL_EXPORT double DLL_CALLSPEC get_circle_offset_h() {
+	return circle_offset_h.load();
+}
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_offset_h(double val) {
+	circle_offset_h.store(val);
+}
+
+
+DLL_EXPORT double DLL_CALLSPEC get_circle_radius() {
+	return circle_radius.load();
+}
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_radius(double val) {
+	circle_radius.store(val);
 }
 
 
