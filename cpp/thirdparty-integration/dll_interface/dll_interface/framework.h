@@ -234,15 +234,49 @@ public:
 		https://docs.opencv.org/4.x/d6/d6e/group__imgproc__draw.html#ga0f9314ea6e35f99bb23f29567fc16e11
 		*/
 		//if (counter % 5 == 0) {
+		int baseline = 0;
+		cv::Size text_size = cv::getTextSize(
+			std::to_string((int)round(fps_average))
+			+ std::string(" fps, ctr: ")
+			+ std::to_string(counter),
+			cv::FONT_HERSHEY_PLAIN,
+			1.0,
+			1,
+			&baseline
+		);
+		/*
+		void cv::rectangle 	( 	InputOutputArray  	img,
+		Point  	pt1,
+		Point  	pt2,
+		const Scalar &  	color,
+		int  	thickness = 1,
+		int  	lineType = LINE_8,
+		int  	shift = 0 
+		) 	
+		*/
+		int text_pos_w = 10;
+		int text_pos_h = 30;
+		int bounding_rect_padding = 5;
+		cv::rectangle(
+			mat_decimated_rgb,
+			cv::Point(text_pos_w - bounding_rect_padding, text_pos_h + bounding_rect_padding),
+			cv::Point(text_pos_w + text_size.width + bounding_rect_padding, text_pos_h - text_size.height - bounding_rect_padding),
+			cv::Scalar(255.0, 255.0, 255.0, 0.0),
+			-1,
+			cv::LINE_8
+		);
+
 		cv::putText(
 			mat_decimated_rgb,
 			std::to_string((int)round(fps_average))
 			+ std::string(" fps, ctr: ")
 			+ std::to_string(counter),
-			cv::Point(10, 30),
+			cv::Point(text_pos_w, text_pos_h),
 			cv::FONT_HERSHEY_PLAIN,
 			1.0,
-			cv::Scalar(0.0, 0.0, 255.0, 0.0)
+			cv::Scalar(0.0, 0.0, 255.0, 0.0),
+			1.0,
+			cv::LINE_AA
 		);
 
 		//// Update image, I don't think this updates until waitKey is called.
@@ -261,7 +295,8 @@ public:
 				),
 				circle_radius.load(),
 				cv::Scalar(255.0, 255.0, 255.0, 0.0),
-				2
+				3, // thickness
+				cv::LINE_AA
 			);
 			// red circle
 			cv::circle(
@@ -272,7 +307,8 @@ public:
 				),
 				circle_radius.load(),
 				cv::Scalar(0.0, 0.0, 255.0, 0.0),
-				1
+				1.5, // thickness
+				cv::LINE_AA
 			);
 		}
 		cv::imshow("display", mat_decimated_rgb);
