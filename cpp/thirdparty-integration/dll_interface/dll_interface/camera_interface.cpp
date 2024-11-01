@@ -286,6 +286,19 @@ void example_imagebuffer_opencv_snap()
 	}
 	
 
+	/**********************************************************
+	
+	Handle horizontal and vertical flipping, it's called ReverseX and ReverseY.
+
+	Values are "True" "False".
+	*/
+
+	// ReverseX
+	if (!map.setValue(ic4::PropId::ReverseX, "True", err)) {
+		std::cerr << "Failed to set ReverseX: " << err.message() << std::endl;
+		return;
+	}
+
 
 	/*****************************************************************************
 	* 
