@@ -316,14 +316,16 @@ void example_imagebuffer_opencv_snap()
 	grabber.streamSetup(sink);
 
 	bool last_external_trigger_enable = external_trigger_enable.load();
-
+	bool this_external_trigger_enable;
+	bool first_iter = true;
 	// https://www.asciitable.com/
 	int key_code = -1;
 	try {
 		while (key_code != 27 && !stop_all_flag.load()) {
 			//
-			if (last_external_trigger_enable != external_trigger_enable.load()) {
-				if (external_trigger_enable.load()) {
+			this_external_trigger_enable = external_trigger_enable.load();
+			if (last_external_trigger_enable != this_external_trigger_enable || first_iter) {
+				if (this_external_trigger_enable) {
 					if (!map.setValue(ic4::PropId::TriggerMode, "On", err)) {
 						std::cerr << "Failed to enable trigger mode: " << err.message() << std::endl;
 					}
@@ -333,12 +335,13 @@ void example_imagebuffer_opencv_snap()
 						std::cerr << "Failed to disable trigger mode: " << err.message() << std::endl;
 					}
 				}
-				last_external_trigger_enable = external_trigger_enable.load();
+				last_external_trigger_enable = this_external_trigger_enable;
 			}
 			// make the window update (required).
 			//  It returns the code of the pressed key or -1 if no key was pressed before the specified time had elapsed.
 			key_code = last_key.load();
 			Sleep(30); // ms
+			first_iter = false;
 		}
 		std::cout << "grabber.streamStop();" << std::endl;
 		grabber.streamStop();
