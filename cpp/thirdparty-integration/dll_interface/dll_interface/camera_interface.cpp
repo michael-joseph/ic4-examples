@@ -261,11 +261,11 @@ void example_imagebuffer_opencv_snap()
 		return;
 	}
 
-	// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
-	if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
-		std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
-		return;
-	}
+	//// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
+	//if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
+	//	std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
+	//	return;
+	//}
 
 	//// GPOut
 	//if (!map.setValue(ic4::PropId::GPOut, 1, err)) {
