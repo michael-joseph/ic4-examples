@@ -147,25 +147,30 @@ void example_imagebuffer_opencv_snap()
 
 	// Create a new Grabber and open the first device. We should only have
 	// one compatible camera connected so this will be safe.
+	std::cout << "auto devices = ic4::DeviceEnum::enumDevices();" << std::endl;
 	auto devices = ic4::DeviceEnum::enumDevices();
 	ic4::Grabber grabber;
+	std::cout << "grabber.deviceOpen(devices.front());" << std::endl;
 	grabber.deviceOpen(devices.front());
 
 	/*****************************************************************************
 	* Configure the camera
 	*/ 
-
+	std::cout << "auto map = grabber.devicePropertyMap();" << std::endl;
 	auto map = grabber.devicePropertyMap();
 
 	// Reset all device settings to default
 	// Not all devices support this, so ignore possible errors.
+	std::cout << "map.setValue(ic4::PropId::UserSetSelector, Default, ic4::Error::Ignore());" << std::endl;
 	map.setValue(ic4::PropId::UserSetSelector, "Default", ic4::Error::Ignore());
+	std::cout << "map.executeCommand(ic4::PropId::UserSetLoad, ic4::Error::Ignore());" << std::endl;
 	map.executeCommand(ic4::PropId::UserSetLoad, ic4::Error::Ignore());
 
 
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
-	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::Mono8);
+	std::cout << "grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8);" << std::endl;
+	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8);
 
 
 	// Set GainAuto
@@ -180,17 +185,17 @@ void example_imagebuffer_opencv_snap()
 		return;
 	}
 
-	// Set ExposureTime to 20us (min), maybe this will let me get the full FPS?
-	if (!map.setValue(ic4::PropId::ExposureTime, 20.0, err)) {
-		std::cerr << "Failed to set ExposureTime: " << err.message() << std::endl;
-		return;
-	}
+	//// Set ExposureTime to 20us (min), maybe this will let me get the full FPS?
+	//if (!map.setValue(ic4::PropId::ExposureTime, 20.0, err)) {
+	//	std::cerr << "Failed to set ExposureTime: " << err.message() << std::endl;
+	//	return;
+	//}
 
-	// ExposureAutoLowerLimit
-	if (!map.setValue(ic4::PropId::ExposureAutoLowerLimit, 20.0, err)) {
-		std::cerr << "Failed to set ExposureAutoLowerLimit: " << err.message() << std::endl;
-		return;
-	}
+	//// ExposureAutoLowerLimit
+	//if (!map.setValue(ic4::PropId::ExposureAutoLowerLimit, 20.0, err)) {
+	//	std::cerr << "Failed to set ExposureAutoLowerLimit: " << err.message() << std::endl;
+	//	return;
+	//}
 
 	//// ExposureAutoLowerLimitAuto
 	//if (!map.setValue(ic4::PropId::ExposureAutoLowerLimitAuto, 20.0, err)) {
@@ -198,11 +203,11 @@ void example_imagebuffer_opencv_snap()
 	//	return;
 	//}
 
-	// ExposureAutoUpperLimit
-	if (!map.setValue(ic4::PropId::ExposureAutoUpperLimit, 100.0, err)) {
-		std::cerr << "Failed to set ExposureAutoUpperLimit: " << err.message() << std::endl;
-		return;
-	}
+	//// ExposureAutoUpperLimit
+	//if (!map.setValue(ic4::PropId::ExposureAutoUpperLimit, 100.0, err)) {
+	//	std::cerr << "Failed to set ExposureAutoUpperLimit: " << err.message() << std::endl;
+	//	return;
+	//}
 
 	// ExposureAutoUpperLimitAuto
 	if (!map.setValue(ic4::PropId::ExposureAutoUpperLimitAuto, "On", err)) {
@@ -242,11 +247,13 @@ void example_imagebuffer_opencv_snap()
 	//	return;
 	//}
 
+
 	// Set AcquisitionFrameRate 
-	if (!map.setValue(ic4::PropId::AcquisitionFrameRate, 75.0, err)) {
+	if (!map.setValue(ic4::PropId::AcquisitionFrameRate, 60.0, err)) {
 		std::cerr << "Failed to set AcquisitionFrameRate: " << err.message() << std::endl;
 		return;
 	}
+
 
 	// Enable/Disable trigger mode. If this in "On" then external trig is enabled.
 	if (!map.setValue(ic4::PropId::TriggerMode, "Off", err)){
@@ -310,8 +317,8 @@ void example_imagebuffer_opencv_snap()
 		std::stoi(grabber.devicePropertyMap().getValueString(ic4::PropId::Width)),
 		std::stoi(grabber.devicePropertyMap().getValueString(ic4::PropId::Height))
 	);
-	std::cout << "auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::Mono8);" << std::endl;
-	auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::Mono8);
+	std::cout << "auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::BayerGR8);" << std::endl;
+	auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::BayerGR8);
 	std::cout << "grabber.streamSetup(sink);" << std::endl;
 	grabber.streamSetup(sink);
 

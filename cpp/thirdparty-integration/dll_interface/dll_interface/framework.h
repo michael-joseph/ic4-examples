@@ -129,12 +129,12 @@ public:
 			int scrn_width, scrn_height;
 			getScreenResolution(scrn_width, scrn_height);
 
-			double img_scale_factor = 0.2;
+			double img_scale_factor = 0.3;
 
 			// Move the window to the lower right.
 			// Auto adjust this based on the resolution of the camera image after we
 			// do down-scaling by img_scale_factor using opencv.
-			int cv_window_extra_width_offset = -50;
+			int cv_window_extra_width_offset = 0;
 			int cv_window_extra_height_offset = -100;
 			cv::moveWindow(
 				"display",
@@ -148,7 +148,7 @@ public:
 
 		auto buffer = sink.popOutputBuffer();
 
-		double img_scale_factor = 0.2;
+		double img_scale_factor = 0.3;
 
 		// Create a cv::Mat
 		auto mat = ic4interop::OpenCV::wrap(*buffer);
@@ -195,7 +195,8 @@ public:
 		// Convert to RGB for display
 		// backtorgb = cv2.cvtColor(gray,cv2.COLOR_GRAY2RGB)
 		auto mat_decimated_rgb = cv::Mat();
-		cv::cvtColor(mat_decimated, mat_decimated_rgb, cv::COLOR_GRAY2RGBA);
+		//cv::cvtColor(mat_decimated, mat_decimated_rgb, cv::COLOR_GRAY2RGBA);
+		cv::cvtColor(mat_decimated, mat_decimated_rgb, cv::COLOR_BayerGR2RGB);
 
 
 

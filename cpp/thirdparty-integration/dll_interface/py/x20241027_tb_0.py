@@ -105,6 +105,7 @@ import pupil_tracking_camera  # pt_camera_dll
 
 ################################################################################
 if(__name__ == "__main__"):
+    # logger.debug
     x = pupil_tracking_camera.pt_camera_dll(
         path_to_dll=pathlib.Path(r"C:\Users\ohns-user\Documents\GitHub\ic4-examples\cpp\thirdparty-integration\dll_interface\dll_interface\x64\Release\dll_interface.dll")
     )
@@ -118,9 +119,9 @@ if(__name__ == "__main__"):
 
 
     # Change to external triggering for a few seconds
-    time.sleep(5)
+    time.sleep(10)
     x._dll.set_external_trigger_enable(True)
-    time.sleep(30)
+    time.sleep(1)
     # Change back to internal triggering
     x._dll.set_external_trigger_enable(False)
 
