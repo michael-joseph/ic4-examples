@@ -162,7 +162,12 @@ if(__name__ == "__main__"):
     x.join()
 
 
-
+    ###
+    (figh, axh) = plt.subplots(1,1,figsize=(8,8))
+    imgh = axh.imshow(acq1_frames[-1])
+    axh.set_title('Last frame from camera, acquired %d frames' % len(acq1_frames))
+    figh.colorbar(imgh)
+    plt.show()
 
 
 
