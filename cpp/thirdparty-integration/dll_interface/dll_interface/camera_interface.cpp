@@ -1,5 +1,19 @@
-#include "pch.h"
+/*
+Copyright 2025 Michael J. Serafino
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+#include "pch.h"
 
 
 std::atomic<int> last_key = -1;
@@ -185,67 +199,11 @@ void example_imagebuffer_opencv_snap()
 		return;
 	}
 
-	//// Set ExposureTime to 20us (min), maybe this will let me get the full FPS?
-	//if (!map.setValue(ic4::PropId::ExposureTime, 20.0, err)) {
-	//	std::cerr << "Failed to set ExposureTime: " << err.message() << std::endl;
-	//	return;
-	//}
-
-	//// ExposureAutoLowerLimit
-	//if (!map.setValue(ic4::PropId::ExposureAutoLowerLimit, 20.0, err)) {
-	//	std::cerr << "Failed to set ExposureAutoLowerLimit: " << err.message() << std::endl;
-	//	return;
-	//}
-
-	//// ExposureAutoLowerLimitAuto
-	//if (!map.setValue(ic4::PropId::ExposureAutoLowerLimitAuto, 20.0, err)) {
-	//	std::cerr << "Failed to set ExposureAutoLowerLimitAuto: " << err.message() << std::endl;
-	//	return;
-	//}
-
-	//// ExposureAutoUpperLimit
-	//if (!map.setValue(ic4::PropId::ExposureAutoUpperLimit, 100.0, err)) {
-	//	std::cerr << "Failed to set ExposureAutoUpperLimit: " << err.message() << std::endl;
-	//	return;
-	//}
-
 	// ExposureAutoUpperLimitAuto
 	if (!map.setValue(ic4::PropId::ExposureAutoUpperLimitAuto, "On", err)) {
 		std::cerr << "Failed to set ExposureAutoUpperLimitAuto: " << err.message() << std::endl;
 		return;
 	}
-
-
-	//// TriggerOverlap "Off" "Readout"
-	//if (!map.setValue(ic4::PropId::TriggerOverlap, "Readout", err)) {
-	//	std::cerr << "Failed to set TriggerOverlap: " << err.message() << std::endl;
-	//	return;
-	//}
-
-
-	////// set DecimationHorizontal
-	//if (!map.setValue(ic4::PropId::DecimationHorizontal, 2, err)) {
-	//	std::cerr << "Failed to set DecimationHorizontal: " << err.message() << std::endl;
-	//	return;
-	//}
-
-	////// set DecimationVertical
-	//if (!map.setValue(ic4::PropId::DecimationVertical, 2, err)) {
-	//	std::cerr << "Failed to set DecimationVertical: " << err.message() << std::endl;
-	//	return;
-	//}
-
-	//// Set Width (max 2448), half 1224
-	//if (!map.setValue(ic4::PropId::Width, 1920, err)) {
-	//	std::cerr << "Failed to set Width: " << err.message() << std::endl;
-	//	return;
-	//}
-
-	//// Set Height (max 2048), half 1024
-	//if (!map.setValue(ic4::PropId::Height, 1080, err)) {
-	//	std::cerr << "Failed to set Height: " << err.message() << std::endl;
-	//	return;
-	//}
 
 
 	// Set AcquisitionFrameRate 
@@ -268,18 +226,6 @@ void example_imagebuffer_opencv_snap()
 		return;
 	}
 
-	//// Enable IMXLowLatencyMode (actually called IMXLowLatencyTriggerMode)
-	//if (!map.setValue(ic4::PropId::IMXLowLatencyTriggerMode, "True", err)){
-	//	std::cerr << "Failed to set IMXLowLatencyTriggerMode: " << err.message() << std::endl;
-	//	return;
-	//}
-
-	//// GPOut
-	//if (!map.setValue(ic4::PropId::GPOut, 1, err)) {
-	//	std::cerr << "Failed to set GPOut: " << err.message() << std::endl;
-	//	return;
-	//}
-
 	// StrobeOperation
 	if (!map.setValue(ic4::PropId::StrobeOperation, "Exposure", err)) {
 		std::cerr << "Failed to set StrobeOperation: " << err.message() << std::endl;
@@ -298,6 +244,9 @@ void example_imagebuffer_opencv_snap()
 	Handle horizontal and vertical flipping, it's called ReverseX and ReverseY.
 
 	Values are "True" "False".
+
+	This will vary depending on how the camera is oriented in the system and
+	the system optics.
 	*/
 
 	// ReverseX

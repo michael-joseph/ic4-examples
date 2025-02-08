@@ -1,11 +1,24 @@
+/*
+Copyright 2025 Michael J. Serafino
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files
 #include <windows.h>
 
-// AVOID Weird crash locking mutex?
-// https://stackoverflow.com/questions/78598141/first-stdmutexlock-crashes-in-application-built-with-latest-visual-studio
 #define _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR
 
 #include <opencv2/opencv.hpp>
@@ -79,16 +92,10 @@ given frame in each call to framesQueued(). Note that when opencv is used
 like this the call to cv::namedWindow() and cv::imshow() must all be in the
 same thread. That's why I had to put it in framesQueued().
 
-This class also updates the last_key variable so that the main thread can
-
 
 @warning Avoid manually dragging the opencv window because this will block
 the callback from finishing and will lead to overflow in the frame queue.
 Unfortunately I don't know how to avoid this behavior with opencv.
-
-file:///C:/Program%20Files/The%20Imaging%20Source%20Europe%20GmbH/ic4/share/theimagingsource/ic4/doc/cpp/classic4_1_1_queue_sink.html
-file:///C:/Program%20Files/The%20Imaging%20Source%20Europe%20GmbH/ic4/share/theimagingsource/ic4/doc/cpp/classic4_1_1_queue_sink_listener.html
-
 
 */
 class customQueueSinkListener : public ic4::QueueSinkListener {
@@ -227,13 +234,6 @@ public:
 		fps_average /= count_for_avg;
 
 
-
-		/*
-		FYI: no easy newline functionality in putText
-		https://stackoverflow.com/questions/27647424/opencv-puttext-new-line-character
-
-		https://docs.opencv.org/4.x/d6/d6e/group__imgproc__draw.html#ga0f9314ea6e35f99bb23f29567fc16e11
-		*/
 		//if (counter % 5 == 0) {
 		int baseline = 0;
 		cv::Size text_size = cv::getTextSize(
