@@ -132,9 +132,10 @@ if(__name__ == "__main__"):
     # arm
     x.arm(3000)
 
-
-    # Change to external triggering for a few seconds
+    # Stay in the default internal triggering mode.
     time.sleep(10)
+    # Change to external triggering for a few seconds (if no trigger is present
+    # then the frame counter will stop).
     x._dll.set_external_trigger_enable(True)
     time.sleep(1)
     # Change back to internal triggering
