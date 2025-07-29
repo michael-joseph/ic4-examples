@@ -124,7 +124,8 @@ class pt_camera_dll():
     def __init__(self, path_to_dll=None):
         if(path_to_dll is None):
             path_to_dll = pathlib.Path(get_script_dir()) / pathlib.Path(
-                r"..\dll\pupil_tracking_camera_dll_interface.dll"
+                # r"..\dll\pupil_tracking_camera_dll_interface.dll"
+                r"C:\Users\ohns-user\Documents\GitHub\ic4-examples\cpp\thirdparty-integration\dll_interface\dll_interface\x64\Release\dll_interface.dll"
             )
 
         # https://stackoverflow.com/questions/59330863/cant-import-dll-module-in-python
@@ -258,6 +259,7 @@ class pt_camera_dll():
 
         self._height = 0
         self._width = 0
+        self._channels = 0
 
         self._need_to_refresh_height_width = True
 
@@ -285,6 +287,15 @@ class pt_camera_dll():
         self._dll.set_frames_to_grab(frames_to_grab)
 
 
+    def arm_stop(self):
+        """!
+        Stops accumulating frames in the internal frame list.
+        """
+        # ensure that we're not grabbing any more frames by setting the frames
+        # to grab to -1.
+        self._dll.set_frames_to_grab(1)
+
+
     def fetch_image_sizes(self):
         """!
         Get the sizes of the image from the frames stored internally. This must
@@ -292,6 +303,7 @@ class pt_camera_dll():
         """
         self._height = self._dll.get_image_height()
         self._width = self._dll.get_image_width()
+        self._channels = self._dll.get_image_channels()
         if(self._height != 0 and self._width != 0):
             # If both are nonzero then we sucessfully fetched the image sizes.
             self._need_to_refresh_height_width = False
@@ -315,7 +327,8 @@ class pt_camera_dll():
             if(self._need_to_refresh_height_width):
                 raise ImageWidthAndHeightRefreshNeededError()
 
-        d = d.reshape((self._height, self._width))
+        # Last dimension is RGB!
+        d = d.reshape((self._height, self._width, self._channels))
         return d
 
 
@@ -400,14 +413,15 @@ if(__name__ == "__main__"):
 
     time.sleep(5)
 
-    x._dll.set_external_trigger_enable(True)
-    time.sleep(2)
-
-    # Change back to internal triggering
-    x._dll.set_external_trigger_enable(False)
+    # x._dll.set_external_trigger_enable(True)
+    # time.sleep(2)
+    # # Change back to internal triggering
+    # x._dll.set_external_trigger_enable(False)
 
     # wait for frames
     time.sleep(5)
+
+    x.arm_stop()
     # Read the frames
     acq1_frames = []
     for n in range(0, x.get_frames_to_grab()):

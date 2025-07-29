@@ -69,6 +69,11 @@ Last frame's height.
 std::atomic<size_t> last_frame_height;
 
 /*
+Last frame's number of channels.
+*/
+std::atomic<size_t> last_frame_channels;
+
+/*
 Enable or disable the external trigger, this will take effect immediately.
 */
 std::atomic<bool> external_trigger_enable = false;
@@ -164,8 +169,11 @@ void example_imagebuffer_opencv_snap()
 	std::cout << "auto devices = ic4::DeviceEnum::enumDevices();" << std::endl;
 	auto devices = ic4::DeviceEnum::enumDevices();
 	ic4::Grabber grabber;
+	//std::cout << "ic4::DeviceInfo devInfo = grabber.deviceInfo(err);" << std::endl;
+	//ic4::DeviceInfo devInfo = grabber.deviceInfo(err);
 	std::cout << "grabber.deviceOpen(devices.front());" << std::endl;
 	grabber.deviceOpen(devices.front());
+	
 
 	/*****************************************************************************
 	* Configure the camera
@@ -185,28 +193,33 @@ void example_imagebuffer_opencv_snap()
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
 	std::cout << "grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8);" << std::endl;
 	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8);
+	std::cout << "grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8); DONE" << std::endl;
 
 
 	// Set GainAuto
+	std::cout << "ic4::PropId::GainAuto" << std::endl;
 	if (!map.setValue(ic4::PropId::GainAuto, "Continuous", err)) {
 		std::cerr << "Failed to set GainAuto: " << err.message() << std::endl;
 		return;
 	}
 
 	// ExposureAuto "Off" "Continuous"
+	std::cout << "ic4::PropId::ExposureAuto" << std::endl;
 	if (!map.setValue(ic4::PropId::ExposureAuto, "Continuous", err)) {
 		std::cerr << "Failed to set ExposureAuto: " << err.message() << std::endl;
 		return;
 	}
 
 	// ExposureAutoUpperLimitAuto
+	std::cout << "ic4::PropId::ExposureAutoUpperLimitAuto" << std::endl;
 	if (!map.setValue(ic4::PropId::ExposureAutoUpperLimitAuto, "On", err)) {
 		std::cerr << "Failed to set ExposureAutoUpperLimitAuto: " << err.message() << std::endl;
 		return;
 	}
 
 
-	// Set AcquisitionFrameRate 
+	// Set AcquisitionFrameRate
+	std::cout << "ic4::PropId::AcquisitionFrameRate" << std::endl;
 	if (!map.setValue(ic4::PropId::AcquisitionFrameRate, 60.0, err)) {
 		std::cerr << "Failed to set AcquisitionFrameRate: " << err.message() << std::endl;
 		return;
@@ -214,6 +227,7 @@ void example_imagebuffer_opencv_snap()
 
 
 	// Enable/Disable trigger mode. If this in "On" then external trig is enabled.
+	std::cout << "ic4::PropId::TriggerMode" << std::endl;
 	if (!map.setValue(ic4::PropId::TriggerMode, "Off", err)){
 		std::cerr << "Failed to enable trigger mode: " << err.message() << std::endl;
 		return;
@@ -221,40 +235,44 @@ void example_imagebuffer_opencv_snap()
 	
 
 	// Set trigger polarity to RisingEdge (actually called TriggerActivation)
+	std::cout << "ic4::PropId::TriggerActivation" << std::endl;
 	if (!map.setValue(ic4::PropId::TriggerActivation, "RisingEdge", err)){
 		std::cerr << "Failed to set trigger polarity: " << err.message() << std::endl;
 		return;
 	}
 
 	// StrobeOperation
+	std::cout << "ic4::PropId::StrobeOperation" << std::endl;
 	if (!map.setValue(ic4::PropId::StrobeOperation, "Exposure", err)) {
 		std::cerr << "Failed to set StrobeOperation: " << err.message() << std::endl;
 		return;
 	}
 
 	// Set StrobeEnable for debugging
+	std::cout << "ic4::PropId::StrobeEnable" << std::endl;
 	if (!map.setValue(ic4::PropId::StrobeEnable, "On", err)) {
 		std::cerr << "Failed to set StrobeEnable: " << err.message() << std::endl;
 		return;
 	}
 	
 
-	/**********************************************************
-	
-	Handle horizontal and vertical flipping, it's called ReverseX and ReverseY.
+	///**********************************************************
+	//
+	//Handle horizontal and vertical flipping, it's called ReverseX and ReverseY.
 
-	Values are "True" "False".
+	//Values are "True" "False".
 
-	This will vary depending on how the camera is oriented in the system and
-	the system optics.
-	*/
+	//This will vary depending on how the camera is oriented in the system and
+	//the system optics.
+	//*/
 
-	// ReverseX
-	if (!map.setValue(ic4::PropId::ReverseX, "True", err)) {
-		std::cerr << "Failed to set ReverseX: " << err.message() << std::endl;
-		return;
-	}
+	//// ReverseX
+	//if (!map.setValue(ic4::PropId::ReverseX, "True", err)) {
+	//	std::cerr << "Failed to set ReverseX: " << err.message() << std::endl;
+	//	return;
+	//}
 
+	std::cout << "Finished setting ic4 camera properties." << std::endl;
 
 	/*****************************************************************************
 	* 
@@ -267,7 +285,15 @@ void example_imagebuffer_opencv_snap()
 		std::stoi(grabber.devicePropertyMap().getValueString(ic4::PropId::Height))
 	);
 	std::cout << "auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::BayerGR8);" << std::endl;
-	auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::BayerGR8);
+	auto sink = ic4::QueueSink::create(listener, ic4::PixelFormat::BayerGR8, err);
+	std::cout << " ic4: err.isSuccess() = " << err.isSuccess() << std::endl;
+	std::cout << " ic4: err.message = " << err.message() << std::endl;
+
+	// Setup the buffer pool in the customQueueSinkListener. This is just 
+	// needed for 1 buffer so that we can convert between BayerGR8 to
+	// RGB8 formats so that we can use the opencv interop functions.
+	listener.setup_conversion_buffer();
+
 	std::cout << "grabber.streamSetup(sink);" << std::endl;
 	grabber.streamSetup(sink);
 
@@ -301,10 +327,12 @@ void example_imagebuffer_opencv_snap()
 		}
 		std::cout << "grabber.streamStop();" << std::endl;
 		grabber.streamStop();
+		listener.destroy_conversion_buffer();
 	}
 	catch (...) {
 		std::cout << "Error, trying to stop stream and exit [grabber.streamStop();]" << std::endl;
 		grabber.streamStop();
+		listener.destroy_conversion_buffer();
 	}
 }
 
@@ -514,6 +542,11 @@ DLL_EXPORT size_t DLL_CALLSPEC get_image_width() {
 
 DLL_EXPORT size_t DLL_CALLSPEC get_image_height() {
 	return last_frame_height.load();
+}
+
+
+DLL_EXPORT size_t DLL_CALLSPEC get_image_channels() {
+	return last_frame_channels.load();
 }
 
 

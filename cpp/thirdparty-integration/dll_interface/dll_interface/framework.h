@@ -66,6 +66,11 @@ Last frame's height.
 */
 extern std::atomic<size_t> last_frame_height;
 
+/*
+Last frame's channels (RGB)
+*/
+extern std::atomic<size_t> last_frame_channels;
+
 
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
@@ -111,7 +116,14 @@ public:
 	{}
 
 	bool sinkConnected(ic4::QueueSink& sink, const ic4::ImageType imageType, size_t min_buffers_required) {
-		std::cout << "min_buffers_required: " << min_buffers_required << std::endl;
+		if (imageType == ic4::PixelFormat::BayerGR8) {
+			std::cout << "sinkConnected: imageType == ic4::PixelFormat::BayerGR8" << std::endl;
+		}
+		else {
+			std::cout << "sinkConnected: imageType != ic4::PixelFormat::BayerGR8" << std::endl;
+		}
+		
+		std::cout << "sinkConnected: min_buffers_required: " << min_buffers_required << std::endl;
 		// Allocate buffers for the sink. First this will be hardcoded, then we'll 
 		// make it more general.
 		ic4::Error err;
@@ -124,7 +136,7 @@ public:
 		static bool first_call = true;
 		static size_t counter = 0;
 		static auto frame_end_time = std::chrono::high_resolution_clock::now();
-
+		ic4::Error err;
 
 
 		if (first_call) {
@@ -154,17 +166,32 @@ public:
 
 
 		auto buffer = sink.popOutputBuffer();
+		/*
+		CONVERT FROM BAYERGR8 to BGR8 so we can use the opencv interop functions.
+		*/
+		auto imageType = buffer->imageType(err);
+		const ic4::ImageType new_image_type_BGR8(ic4::PixelFormat::BGR8, imageType.width(), imageType.height());
+		if (conversionBuffer == NULL) {
+			conversionBuffer = bufferPool->getBuffer(new_image_type_BGR8); // Why is autocomplete throwing an error here??
+		}
+		conversionBuffer->copyFrom(*buffer, ic4::ImageBuffer::CopyOptions::Default, err);
+
+		
+		//std::cout << "imageType is " << ic4::to_string(conversionBuffer->imageType()) << std::endl;
+
 
 		double img_scale_factor = 0.3;
 
 		// Create a cv::Mat
-		auto mat = ic4interop::OpenCV::wrap(*buffer);
+		auto mat = ic4interop::OpenCV::wrap(*conversionBuffer);
+		
 
 		// Update the last frame width and height. The code assumes that the frame 
 		// sizes are not changing over the course of an acquisition!
 		cv::Size mat_sz = mat.size();
 		last_frame_height.store(mat_sz.height);
 		last_frame_width.store(mat_sz.width);
+		last_frame_channels.store(mat.channels());
 
 
 		/*
@@ -195,17 +222,9 @@ public:
 
 		// Generate a reduced size image for display purposes. How can I use this with the 
 		// displayBuffer?
-		auto mat_decimated = cv::Mat();
-		auto dsize = cv::Size(0, 0);
-		cv::resize(mat, mat_decimated, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
-
-		// Convert to RGB for display
-		// backtorgb = cv2.cvtColor(gray,cv2.COLOR_GRAY2RGB)
 		auto mat_decimated_rgb = cv::Mat();
-		//cv::cvtColor(mat_decimated, mat_decimated_rgb, cv::COLOR_GRAY2RGBA);
-		cv::cvtColor(mat_decimated, mat_decimated_rgb, cv::COLOR_BayerGR2RGB);
-
-
+		auto dsize = cv::Size(0, 0);
+		cv::resize(mat, mat_decimated_rgb, dsize, img_scale_factor, img_scale_factor, cv::INTER_LINEAR);
 
 		// Calculate the FPS to display on the reduced image.
 		double fps_d = 1.0 / (1e-9 * ((double)std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -331,11 +350,25 @@ public:
 		
 	}
 
+	void setup_conversion_buffer() {
+		bufferPool = ic4::BufferPool::create();
+	}
+
+	void destroy_conversion_buffer() {
+		if (conversionBuffer != NULL) {
+			conversionBuffer.reset();
+		}
+		if(bufferPool != NULL){
+			bufferPool.reset();
+		}
+	}
+
 private:
 
 	int grabber_width;
 	int grabber_height;
-
+	std::shared_ptr<ic4::BufferPool> bufferPool = NULL;
+	std::shared_ptr<ic4::ImageBuffer> conversionBuffer = NULL;
 };
 
 
