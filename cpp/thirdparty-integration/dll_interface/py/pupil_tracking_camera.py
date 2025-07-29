@@ -254,6 +254,26 @@ class pt_camera_dll():
         dll.set_circle_radius.argtypes = [ctypes.c_double]
         dll.set_circle_radius.restypes = []
 
+        # DLL_EXPORT void DLL_CALLSPEC set_downscale_factor(double val);
+        dll.set_downscale_factor.argtypes = [ctypes.c_double]
+        dll.set_downscale_factor.restypes = []
+
+        # DLL_EXPORT double DLL_CALLSPEC get_downscale_factor();
+        dll.get_downscale_factor.argtypes = []
+        dll.get_downscale_factor.restypes = [ctypes.c_double]
+
+        # DLL_EXPORT void DLL_CALLSPEC set_trigger_manual_white_balance()
+        dll.set_trigger_manual_white_balance.argtypes = []
+        dll.set_trigger_manual_white_balance.restypes = []
+
+        # DLL_EXPORT void DLL_CALLSPEC set_exposure_time_us(double val);
+        dll.set_exposure_time_us.argtypes = [ctypes.c_double]
+        dll.set_exposure_time_us.restypes = []
+
+        # DLL_EXPORT double DLL_CALLSPEC get_exposure_time_us();
+        dll.get_exposure_time_us.argtypes = []
+        dll.get_exposure_time_us.restypes = [ctypes.c_double]
+
 
         self._dll = dll
 
@@ -367,6 +387,53 @@ class pt_camera_dll():
                 )
 
 
+    @property
+    def downscale_factor(self):
+        if (hasattr(self._dll, 'get_downscale_factor')):
+            if (not hasattr(self, '_downscale_factor')):
+                self._downscale_factor = self._dll.get_downscale_factor()
+            return self._downscale_factor
+        else:
+            self._downscale_factor = -1
+            return self._downscale_factor
+
+    @downscale_factor.setter
+    def downscale_factor(self, val):
+        self._downscale_factor = val
+        if (hasattr(self._dll, 'set_downscale_factor')):
+            self._dll.set_downscale_factor(val)
+
+
+    @property
+    def exposure_time_us(self):
+        if(hasattr(self._dll, 'get_exposure_time_us')):
+            if(not hasattr(self, '_exposure_time_us')):
+                self._exposure_time_us = self._dll.get_exposure_time_us()
+            return self._exposure_time_us
+        else:
+            self._exposure_time_us = -1
+            return self._exposure_time_us
+
+
+    @exposure_time_us.setter
+    def exposure_time_us(self, val):
+        if(val < 1 and val >= 0):
+            val = 1
+        self._exposure_time_us = val
+        if(hasattr(self._dll, 'set_exposure_time_us')):
+            self._dll.set_exposure_time_us(val)
+
+
+    @property
+    def trigger_manual_white_balance(self):
+        return False
+
+    @trigger_manual_white_balance.setter
+    def trigger_manual_white_balance(self, val=True):
+        if (hasattr(self._dll, 'set_trigger_manual_white_balance')):
+            self._dll.set_trigger_manual_white_balance(val)
+
+
 
     def stop(self):
         """!"""
@@ -417,6 +484,9 @@ if(__name__ == "__main__"):
     # time.sleep(2)
     # # Change back to internal triggering
     # x._dll.set_external_trigger_enable(False)
+
+    logger.debug('Triggering white balance "Once"')
+    x.trigger_manual_white_balance = True
 
     # wait for frames
     time.sleep(5)

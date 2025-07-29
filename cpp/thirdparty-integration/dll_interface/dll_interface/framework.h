@@ -54,7 +54,7 @@ extern std::atomic<bool> circle_plot_enable;
 extern std::atomic<double> circle_offset_w;
 extern std::atomic<double> circle_offset_h;
 extern std::atomic<double> circle_radius;
-
+extern std::atomic<bool> trigger_manual_white_balance;
 
 /*
 Last frame's width.
@@ -334,8 +334,7 @@ public:
 		cv::imshow("display", mat_decimated_rgb);
 		
 
-
-		//}
+		
 
 		// Required to update the opencv imshow. We aren't doing anything
 		// here with the actual key value. This is leftover from the exe
@@ -454,6 +453,26 @@ based on get_frame_size_in_bytes().
 */
 DLL_EXPORT int DLL_CALLSPEC read_oldest_frame(uint8_t* user_buffer);
 
+
+DLL_EXPORT bool DLL_CALLSPEC get_circle_plot_enable();
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_plot_enable(bool val);
+
+
+DLL_EXPORT double DLL_CALLSPEC get_circle_offset_w();
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_offset_w(double val);
+
+
+DLL_EXPORT double DLL_CALLSPEC get_circle_offset_h();
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_offset_h(double val);
+
+
+DLL_EXPORT double DLL_CALLSPEC get_circle_radius();
+
+DLL_EXPORT void DLL_CALLSPEC set_circle_radius(double val);
+
 /*
 Clears the frame list. Use this if acquisition was aborted and you need to
 start from an empty frame list without reading all frames.
@@ -461,4 +480,12 @@ start from an empty frame list without reading all frames.
 DLL_EXPORT int DLL_CALLSPEC clear_frame_list();
 
 
+DLL_EXPORT void DLL_CALLSPEC set_downscale_factor(double val);
 
+DLL_EXPORT double DLL_CALLSPEC get_downscale_factor();
+
+DLL_EXPORT void DLL_CALLSPEC set_trigger_manual_white_balance();
+
+DLL_EXPORT void DLL_CALLSPEC set_exposure_time_us(double val);
+
+DLL_EXPORT double DLL_CALLSPEC get_exposure_time_us();

@@ -212,6 +212,8 @@ void example_imagebuffer_opencv_snap()
 
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/guide_configuring_device.html
 	// https://www.theimagingsource.com/en-us/documentation/ic4cpp/technical_article_properties.html
+	//
+	// file:///C:/Program%20Files/The%20Imaging%20Source%20Europe%20GmbH/ic4/share/theimagingsource/ic4/doc/cpp/namespaceic4_1_1_prop_id.html
 	std::cout << "grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8);" << std::endl;
 	grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8);
 	std::cout << "grabber.devicePropertyMap().setValue(ic4::PropId::PixelFormat, ic4::PixelFormat::BayerGR8); DONE" << std::endl;
@@ -339,6 +341,15 @@ void example_imagebuffer_opencv_snap()
 					}
 				}
 				last_external_trigger_enable = this_external_trigger_enable;
+			}
+			if (trigger_manual_white_balance.load()) {
+				if (!map.setValue(ic4::PropId::BalanceWhiteMode, "Gray World", err)) {
+					std::cerr << "Failed turning off ic4::PropId::BalanceWhiteMode: " << err.message() << std::endl;
+				}
+				if (!map.setValue(ic4::PropId::BalanceWhiteAuto, "Once", err)) {
+					std::cerr << "Failed turning off ic4::PropId::BalanceWhiteAuto: " << err.message() << std::endl;
+				}
+				trigger_manual_white_balance.store(false);
 			}
 			// make the window update (required).
 			//  It returns the code of the pressed key or -1 if no key was pressed before the specified time had elapsed.
@@ -632,7 +643,33 @@ DLL_EXPORT int DLL_CALLSPEC clear_frame_list() {
 	return 0;
 }
 
+DLL_EXPORT void DLL_CALLSPEC set_downscale_factor(double val) {
+	// Enforce limits.
+	if (val > 1) {
+		val = 1;
+	}
+	else if (val < 0.01) {
+		val = 0.01;
+	}
+	// Set the downscale factor.
+	downscale_factor.store(val);
+}
 
+DLL_EXPORT double DLL_CALLSPEC get_downscale_factor() {
+	return downscale_factor.load();
+}
+
+DLL_EXPORT void DLL_CALLSPEC set_trigger_manual_white_balance() {
+	trigger_manual_white_balance.store(true);
+}
+
+DLL_EXPORT void DLL_CALLSPEC set_exposure_time_us(double val) {
+	exposure_time_us.store(val);
+}
+
+DLL_EXPORT double DLL_CALLSPEC get_exposure_time_us() {
+	return exposure_time_us.load();
+}
 
 
 
