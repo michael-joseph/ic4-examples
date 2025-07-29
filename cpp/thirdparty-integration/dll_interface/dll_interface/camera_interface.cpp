@@ -243,7 +243,7 @@ void example_imagebuffer_opencv_snap()
 
 	// Set AcquisitionFrameRate
 	std::cout << "ic4::PropId::AcquisitionFrameRate" << std::endl;
-	if (!map.setValue(ic4::PropId::AcquisitionFrameRate, 60.0, err)) {
+	if (!map.setValue(ic4::PropId::AcquisitionFrameRate, 30.0, err)) {
 		std::cerr << "Failed to set AcquisitionFrameRate: " << err.message() << std::endl;
 		return;
 	}
@@ -343,6 +343,7 @@ void example_imagebuffer_opencv_snap()
 				last_external_trigger_enable = this_external_trigger_enable;
 			}
 			if (trigger_manual_white_balance.load()) {
+				std::cout << "White balance once activated" << std::endl;
 				if (!map.setValue(ic4::PropId::BalanceWhiteMode, "Gray World", err)) {
 					std::cerr << "Failed turning off ic4::PropId::BalanceWhiteMode: " << err.message() << std::endl;
 				}
