@@ -429,9 +429,9 @@ class pt_camera_dll():
         return False
 
     @trigger_manual_white_balance.setter
-    def trigger_manual_white_balance(self, val=True):
+    def trigger_manual_white_balance(self, dummy_val):
         if (hasattr(self._dll, 'set_trigger_manual_white_balance')):
-            self._dll.set_trigger_manual_white_balance(val)
+            self._dll.set_trigger_manual_white_balance()
 
 
 
@@ -488,8 +488,17 @@ if(__name__ == "__main__"):
     logger.debug('Triggering white balance "Once"')
     x.trigger_manual_white_balance = True
 
+    time.sleep(2)
+    x.trigger_manual_white_balance = True
+
+    time.sleep(2)
+    x.trigger_manual_white_balance = True
+
+    time.sleep(2)
+    x.trigger_manual_white_balance = True
+
     # wait for frames
-    time.sleep(5)
+    time.sleep(10)
 
     x.arm_stop()
     # Read the frames

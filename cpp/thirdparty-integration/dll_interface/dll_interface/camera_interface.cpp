@@ -347,6 +347,13 @@ void example_imagebuffer_opencv_snap()
 				if (!map.setValue(ic4::PropId::BalanceWhiteMode, "Gray World", err)) {
 					std::cerr << "Failed turning off ic4::PropId::BalanceWhiteMode: " << err.message() << std::endl;
 				}
+				// We have to set the white balance to off, then set it to once to
+				// trigger the white balance setting.
+				if (!map.setValue(ic4::PropId::BalanceWhiteAuto, "Off", err)) {
+					std::cerr << "Failed turning off ic4::PropId::BalanceWhiteAuto: " << err.message() << std::endl;
+				}
+				// Do I need to wait for a few frames for this to be applied?
+				//std::this_thread::sleep_for(std::chrono::milliseconds(500));
 				if (!map.setValue(ic4::PropId::BalanceWhiteAuto, "Once", err)) {
 					std::cerr << "Failed turning off ic4::PropId::BalanceWhiteAuto: " << err.message() << std::endl;
 				}
