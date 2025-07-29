@@ -101,6 +101,27 @@ Size of the center circle
 */
 std::atomic<double> circle_radius = 20;
 
+/*
+Downscaling factor used to scale the full resolution frames down to what
+is shown in the preview window. A downscaling factor of 1.0 means no
+downscaling.
+*/
+std::atomic<double> downscale_factor = 0.2;
+
+/*
+Set manual white balance flag. If this is set to true then the next
+time a frame is acquired the manual white balance operation will be
+triggered and this flag will be set back to false.
+*/
+std::atomic<bool> trigger_manual_white_balance = false;
+
+
+/*
+Sets the exposure time for the camera in us. In this implementation
+there is no gain setting, just exposure. If exposure_time_us is set
+to -1 then auto exposure / auto gain is enabled.
+*/
+std::atomic<double> exposure_time_us = -1;
 
 /*
 Gets the size of the screen (not tested on multi-monitor setups).
