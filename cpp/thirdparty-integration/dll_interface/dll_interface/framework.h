@@ -153,6 +153,13 @@ public:
 		// Create a cv::Mat
 		auto mat = ic4interop::OpenCV::wrap(*buffer);
 
+		///////////////////////////////////////////////////////////////////////
+		// Transpose and flip due to how optics were re-arranged on 2026-01-26
+		mat = mat.t();
+		cv::flip(mat, mat, 0);
+		///////////////////////////////////////////////////////////////////////
+
+
 		// Update the last frame width and height. The code assumes that the frame 
 		// sizes are not changing over the course of an acquisition!
 		cv::Size mat_sz = mat.size();
