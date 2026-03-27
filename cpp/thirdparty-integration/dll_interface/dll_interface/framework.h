@@ -125,6 +125,14 @@ public:
 			std::cout << "opening window" << std::endl;
 			cv::namedWindow("display", cv::WINDOW_AUTOSIZE);
 
+			// Get the window handle (HWND) - "Main HighGUI class" is the default class name
+			HWND hwnd = FindWindow(L"Main HighGUI class", L"display");
+
+			// Set the window to be always on top
+			if (hwnd != NULL) {
+				SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+			}
+
 			// Get the size of the screen (not sure how this works on multi-monitor setups)
 			int scrn_width, scrn_height;
 			getScreenResolution(scrn_width, scrn_height);
@@ -135,7 +143,7 @@ public:
 			// Auto adjust this based on the resolution of the camera image after we
 			// do down-scaling by img_scale_factor using opencv.
 			int cv_window_extra_width_offset = -50;
-			int cv_window_extra_height_offset = -100;
+			int cv_window_extra_height_offset = -200;
 			cv::moveWindow(
 				"display",
 				scrn_width + cv_window_extra_width_offset - (int)(img_scale_factor * (double)grabber_width),
